@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Orders - Street Magic</title>
+  <link rel="stylesheet" href="css/orders.css"/>
+  <script defer src="js/orders.js"></script>
+</head>
+<body>
+  <!-- HEADER -->
+  <header>
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+      <div class="logo">Street Magic</div>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="menu.html">Menu</a></li>
+        <li><a href="orders.html" class="active" aria-current="page">Orders</a></li>
+        <li><a href="purchase.html">Purchase</a></li>
+        <li><a href="report.html">Reports</a></li>
+      </ul>
+    </nav>
+  </header>
+  
+
+  <!-- MAIN -->
+  <main class="container" id="mainContent">
+    <h1>Saved Orders</h1>
+
+    <!-- SUMMARY -->
+    <section id="summary" aria-live="polite" class="summary">
+      <div>Total Orders: <span id="totalOrders">0</span></div>
+      <div>Total Revenue: ₹<span id="totalRevenue">0</span></div>
+    </section>
+
+    <!-- CONTROLS -->
+    <section class="controls" aria-label="Order controls">
+      <div class="filter-bar">
+        <label for="orderDate">Filter by Date:</label>
+        <input type="date" id="orderDate" aria-label="Filter by date"/>
+
+        <label for="searchText" class="sr-only">Search orders</label>
+        <input type="text" id="searchText" placeholder="Search by item, id or date..." aria-label="Search orders"/>
+
+        <label for="sortSelect">Sort:</label>
+        <select id="sortSelect" aria-label="Sort orders">
+          <option value="newest">Newest → Oldest</option>
+          <option value="oldest">Oldest → Newest</option>
+          <option value="high">Total (High → Low)</option>
+          <option value="low">Total (Low → High)</option>
+        </select>
+
+        <label for="pageSize">Per page:</label>
+        <select id="pageSize" aria-label="Orders per page">
+          <option value="5">5</option>
+          <option value="10" selected>10</option>
+          <option value="20">20</option>
+        </select>
+
+        <button id="clearFilter" aria-label="Clear filters" class="small-btn">Clear</button>
+      </div>
+
+      <div class="action-bar">
+        <button id="printAllBtn" aria-label="Print all orders" class="blue-btn">🖨️ Print All</button>
+        <button id="exportPDF" aria-label="Export orders to PDF" class="green-btn">📄 Export PDF</button>
+        <button id="exportExcel" aria-label="Export orders to Excel" class="green-btn">📊 Export Excel</button>
+      </div>
+    </section>
+
+    <!-- ORDERS LIST -->
+    <section id="ordersSection" aria-label="Orders list">
+      <div id="ordersList" role="list" class="orders-grid"></div>
+      <div id="emptyState" class="empty-state" hidden>No orders found.</div>
+    </section>
+
+    <!-- PAGINATION -->
+    <nav id="pagination" class="pagination" aria-label="Pagination"></nav>
+  </main>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>&copy; 2025 Street Magic Restaurant</p>
+  </footer>
+
+  <!-- EDIT MODAL -->
+  <dialog id="editModal">
+    <form id="editForm" method="dialog">
+      <h2>Edit Order</h2>
+
+      <!-- ✅ Added Customer Info Section -->
+      <div class="customer-info">
+        <input type="text" id="customerName" placeholder="Customer Name" />
+        <input type="text" id="customerNumber" placeholder="Customer Number" />
+          <input type="date" id="orderDateEdit" placeholder="Order Date" />
+      </div>
+      <!-- ✅ End of Customer Info Section -->
+
+      <div id="itemsContainer"></div>
+      <button type="button" id="addItemBtn">+ Add Item</button>
+      <p class="total-display">Total: ₹<span id="modalTotal">0</span></p>
+      <menu>
+        <button value="cancel" class="cancel-btn">Cancel</button>
+        <button type="submit" class="save-btn">Save Changes</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <!-- JS Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Street Magic - Menu</title>
+  <link rel="stylesheet" href="css/menu.css" />
+</head>
+
+<body>
+  <!-- Header -->
+  <header>
+    <nav class="navbar">
+      <div class="logo">Street Magic</div>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="menu.html" class="active">Menu</a></li>
+        <li><a href="orders.html">Orders</a></li>
+        <li><a href="purchase.html">Purchase</a></li>
+        <li><a href="report.html">Reports</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- Main Layout -->
+  <main class="menu-layout">
+    <!-- Quick Navigation -->
+    <aside class="quick-nav">
+      <h3>Quick Navigation</h3>
+      <ul id="categoryList"></ul>
+    </aside>
+
+    <!-- Menu Section -->
+    <section class="menu-section">
+      <!-- ✅ Updated Header -->
+      <div class="menu-header">
+        <h2>Our Menu</h2>
+        <div class="menu-buttons">
+          <button id="addMenuBtn">+ Add Menu</button>
+          <button id="clearMenuBtn" class="danger">🗑 Clear All</button>
+        </div>
+      </div>
+
+      <!-- Modal -->
+      <div id="menuModal" class="modal">
+        <div class="modal-content">
+          <span id="closeModal" class="close">&times;</span>
+          <h3 id="modalTitle">Add Menu Item</h3>
+
+          <label>Name:</label>
+          <input type="text" id="newItemName" placeholder="Item Name" />
+
+          <label>Price (₹):</label>
+          <input type="number" id="newItemPrice" placeholder="Price" />
+          <label>Category:</label>
+          <div class="input-wrapper category-select-wrapper">
+            <input type="text" id="newItemCategory" placeholder="Category" autocomplete="off" />
+            <span class="dropdown-toggle" id="toggleCategoryList">▼</span>
+            <div id="categoryDropdown" class="dropdown-list"></div>
+          </div>
+
+          <label>Subcategory:</label>
+          <div class="input-wrapper subcategory-select-wrapper">
+            <input type="text" id="newItemSubcategory" placeholder="Subcategory" autocomplete="off" />
+            <span class="dropdown-toggle" id="toggleSubcategoryList">▼</span>
+            <div id="subcategoryDropdown" class="dropdown-list"></div>
+          </div>
+
+
+
+
+
+          <label>Variants:</label>
+          <div id="variantList"></div>
+          <button type="button" id="addVariantBtn">+ Add Variant</button>
+
+          <button id="saveMenuItem">Save</button>
+        </div>
+      </div>
+
+      <!-- Menu Items -->
+      <div id="menuItems"></div>
+    </section>
+
+    <!-- Cart Section -->
+    <aside class="cart-section">
+      <h3>Cart</h3>
+      <ul id="cartList"></ul>
+
+      <div class="cart-extra">
+        <label>Discount (₹):</label>
+        <input type="number" id="discountInput" value="0" />
+      </div>
+
+      <div class="cart-extra">
+        <label>Cash (₹):</label>
+        <input type="number" id="cashInput" value="0" />
+        <label>Online (₹):</label>
+        <input type="number" id="onlineInput" value="0" />
+      </div>
+
+      <div class="cart-extra">
+        <label>Table:</label>
+        <select id="tableSelect">
+          <option value="Takeaway">Takeaway</option>
+          <option value="Table 1">Table 1</option>
+          <option value="Table 2">Table 2</option>
+          <option value="Table 3">Table 3</option>
+          <option value="Table 4">Table 4</option>
+        </select>
+      </div>
+
+      <!-- ✅ Optional Customer Details Added -->
+      <div class="cart-extra">
+        <label>Customer Name:</label>
+        <input type="text" id="orderCustomerName" placeholder="Customer Name" />
+      </div>
+
+      <div class="cart-extra">
+        <label>Mobile No:</label>
+        <input type="text" id="orderCustomerMobile" placeholder="Mobile No" maxlength="10" />
+      </div>
+      <!-- ✅ End of Customer Details -->
+
+      <div class="cart-total">
+        <h4>Subtotal: ₹<span id="cartSubtotal">0</span></h4>
+        <h4>Discount: ₹<span id="cartDiscount">0</span></h4>
+        <h3>Total: ₹<span id="cartTotal">0</span></h3>
+      </div>
+
+      <div class="cart-buttons">
+        <button id="kotBtn">Print KOT</button>
+        <button id="printBtn">Print & Save Bill</button>
+      </div>
+
+      <div class="previous-order">
+        <h4>Previous Order</h4>
+        <div id="previousOrder"></div>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Street Magic Restaurant</p>
+  </footer>
+
+  <script src="js/menu.js"></script>
+</body>
+
+</html>

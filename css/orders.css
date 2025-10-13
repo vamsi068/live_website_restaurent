@@ -1,0 +1,540 @@
+@import url("index.css"); /* base styles */
+
+/* -------------------- GLOBAL RESET -------------------- */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+body {
+  background: #f5f7fa;
+  color: #222;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+/* -------------------- NAVBAR -------------------- */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #111827;
+  color: #fff;
+  padding: 12px 20px;
+}
+
+.navbar .logo {
+  font-weight: 700;
+  font-size: 1.15rem;
+}
+
+.navbar .nav-links {
+  list-style: none;
+  display: flex;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+}
+
+.navbar a {
+  color: #cbd5e1;
+  text-decoration: none;
+}
+
+.navbar a.active,
+.navbar a:hover {
+  color: #fff;
+}
+
+/* -------------------- CONTAINER -------------------- */
+.container {
+  flex: 1;
+  max-width: 1100px;
+  margin: 22px auto;
+  padding: 18px;
+  min-height: calc(100vh - 220px);
+  box-sizing: border-box;
+  text-align: left;
+}
+
+/* -------------------- SUMMARY -------------------- */
+.summary {
+  display: flex;
+  gap: 20px;
+  justify-content: space-around;
+  margin-bottom: 15px;
+  background: #fff;
+  padding: 10px;
+  border-radius: 8px;
+  font-weight: 600;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+/* -------------------- CONTROLS -------------------- */
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.filter-bar label {
+  font-weight: 600;
+}
+
+.filter-bar input[type="date"],
+.filter-bar input[type="text"],
+.filter-bar select {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  min-width: 140px;
+}
+
+.filter-bar button {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+/* -------------------- BUTTON STYLES -------------------- */
+button {
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: transform 0.08s ease, box-shadow 0.12s ease, opacity 0.2s;
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+button:hover {
+  box-shadow: 0 6px 18px rgba(16, 24, 40, 0.06);
+}
+
+/* Utility Buttons */
+#clearFilter {
+  background: #64748b;
+  color: #fff;
+}
+
+#exportPDF,
+.red-btn {
+  background: #e63946;
+  color: #fff;
+}
+
+#exportExcel,
+.green-btn {
+  background: #16a34a;
+  color: #fff;
+}
+
+.blue-btn {
+  background: #118ab2;
+  color: #fff;
+}
+
+/* Action bar */
+.action-bar {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+/* -------------------- ORDERS GRID -------------------- */
+#ordersList,
+.orders-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  margin-top: 12px;
+}
+
+/* -------------------- ORDER CARD -------------------- */
+.order-card {
+  background: #fff;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.order-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+}
+
+.order-card h3 {
+  margin: 0;
+  font-size: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.order-card ul {
+  margin: 0;
+  padding-left: 18px;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.order-card .meta {
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+.order-card .order-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.order-card .btn-delete {
+  background: #ef4444;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-weight: 700;
+}
+
+.order-card .btn-view {
+  background: #0369a1;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-weight: 700;
+}
+
+/* -------------------- EMPTY STATE -------------------- */
+.empty-state {
+  margin-top: 18px;
+  padding: 18px;
+  text-align: center;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.03);
+}
+
+/* -------------------- PAGINATION -------------------- */
+.pagination {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.pagination button {
+  background: #fff;
+  border: 1px solid #e6e9ef;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.pagination button.active {
+  background: #0ea5a4;
+  color: #fff;
+  border: none;
+}
+
+/* .........................edit-card.......................... */
+
+
+
+
+/* -------------------- MODAL -------------------- */
+dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: none;
+  border-radius: 10px;
+  padding: 20px;
+  max-width: 400px; /* reduced width */
+  width: 90%;
+}
+
+#itemsContainer {
+  margin-bottom: 10px;
+}
+
+.item-row {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+
+.item-row input {
+  flex: 1;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  width: 60px; /* reduce size for price & qty */
+
+}
+
+.item-row .remove-item {
+  background: #e63946;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 0 8px;
+  cursor: pointer;
+}
+
+.total-display {
+  margin: 10px 0;
+  font-weight: 600;
+}
+
+.save-btn {
+  background: #06d6a0;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+}
+
+.cancel-btn {
+  background: #ccc;
+  padding: 8px 12px;
+  border-radius: 5px;
+}
+
+/* -------------------- FOOTER -------------------- */
+footer {
+  background: #111827;
+  color: #fff;
+  text-align: center;
+  padding: 15px 0;
+  font-size: 0.95rem;
+}
+
+/* -------------------- RESPONSIVE -------------------- */
+@media (max-width: 600px) {
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .summary {
+    flex-direction: column;
+    gap: 5px;
+    text-align: center;
+  }
+
+  .action-bar {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+}
+
+/* -------------------- RESPONSIVE ENHANCEMENTS -------------------- */
+
+/* Tablet (max-width: 992px) */
+@media (max-width: 992px) {
+  .container {
+    max-width: 95%;
+    padding: 14px;
+  }
+
+  .summary {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .filter-bar {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .order-card {
+    padding: 12px;
+  }
+
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .navbar .nav-links {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+/* Mobile Landscape (max-width: 768px) */
+@media (max-width: 768px) {
+  body {
+    font-size: 15px;
+  }
+
+  .navbar {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .navbar .logo {
+    font-size: 1rem;
+  }
+
+  .summary {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .filter-bar {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  #ordersList,
+  .orders-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  .order-card {
+    font-size: 0.95rem;
+    padding: 12px;
+  }
+
+  .action-bar {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+}
+
+/* Small Mobile (max-width: 480px) */
+@media (max-width: 480px) {
+  body {
+    font-size: 14px;
+  }
+
+  .navbar {
+    padding: 10px;
+  }
+
+  .container {
+    padding: 10px;
+  }
+
+  .order-card h3 {
+    font-size: 0.95rem;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .order-card ul {
+    padding-left: 12px;
+    max-height: 100px;
+  }
+
+  .filter-bar input,
+  .filter-bar select,
+  .filter-bar button {
+    width: 100%;
+  }
+
+  .summary {
+    font-size: 0.9rem;
+    padding: 8px;
+  }
+
+  .pagination {
+    gap: 4px;
+  }
+
+  footer {
+    font-size: 0.85rem;
+    padding: 10px 0;
+  }
+}
+
+/* Extra Small (max-width: 360px) */
+@media (max-width: 360px) {
+  .order-card {
+    padding: 10px;
+  }
+
+  button {
+    font-size: 0.8rem;
+    padding: 5px 8px;
+  }
+
+  .summary {
+    font-size: 0.85rem;
+  }
+}
+
+/* Edit Modal - Customer Info */
+.customer-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.customer-info input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+/* Make the date field span across both columns */
+#orderDateEdit {
+  grid-column: span 2;
+}
+
+
+@media (min-width: 600px) {
+  .customer-info {
+    flex-direction: row;
+  }
+  .customer-info input {
+    flex: 1;
+  }
+}
+
+.orange-btn {
+  background-color: #ff9800;
+  color: #fff;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.orange-btn:hover {
+  background-color: #e68900;
+}
