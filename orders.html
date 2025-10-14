@@ -6,6 +6,9 @@
   <title>Orders - Street Magic</title>
   <link rel="stylesheet" href="css/orders.css"/>
   <script defer src="js/orders.js"></script>
+  <!-- Libraries used by JS exports -->
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
   <!-- HEADER -->
@@ -21,7 +24,6 @@
       </ul>
     </nav>
   </header>
-  
 
   <!-- MAIN -->
   <main class="container" id="mainContent">
@@ -33,11 +35,11 @@
       <div>Total Revenue: ₹<span id="totalRevenue">0</span></div>
     </section>
 
-    <!-- ========================= -->
     <!-- Today's Sold Items Section -->
-    <!-- ========================= -->
     <section class="sold-items-section">
-      <h2>Today's Sold Items</h2>
+      <div class="sold-header" id="soldHeader" role="button" aria-expanded="true">
+        <h2><span class="triangle" id="triangle">▼</span> Today's Sold Items</h2>
+      </div>
       <div id="todaysSoldItems" class="sold-items-list">
         <p>Loading...</p>
       </div>
@@ -50,7 +52,7 @@
         <input type="date" id="orderDate" aria-label="Filter by date"/>
 
         <label for="searchText" class="sr-only">Search orders</label>
-        <input type="text" id="searchText" placeholder="Search by item, id or date..." aria-label="Search orders"/>
+        <input type="text" id="searchText" placeholder="Search by item, id, customer or date..." aria-label="Search orders"/>
 
         <label for="sortSelect">Sort:</label>
         <select id="sortSelect" aria-label="Sort orders">
@@ -66,14 +68,17 @@
           <option value="10" selected>10</option>
           <option value="20">20</option>
         </select>
+        
+        <button id="clearFilter" class="gray-btn">Clear Filter</button>
+        <button id="deleteAllBtn" class="red-btn">Delete All Orders</button>
 
-        <button id="clearFilter" aria-label="Clear filters" class="small-btn">Clear</button>
       </div>
 
       <div class="action-bar">
         <button id="printAllBtn" aria-label="Print all orders" class="blue-btn">🖨️ Print All</button>
         <button id="exportPDF" aria-label="Export orders to PDF" class="green-btn">📄 Export PDF</button>
         <button id="exportExcel" aria-label="Export orders to Excel" class="green-btn">📊 Export Excel</button>
+        <button id="exportCSV" aria-label="Export orders to CSV" class="green-btn">📥 Export CSV</button>
       </div>
     </section>
 
@@ -97,13 +102,11 @@
     <form id="editForm" method="dialog">
       <h2>Edit Order</h2>
 
-      <!-- ✅ Added Customer Info Section -->
       <div class="customer-info">
         <input type="text" id="customerName" placeholder="Customer Name" />
         <input type="text" id="customerNumber" placeholder="Customer Number" />
-          <input type="date" id="orderDateEdit" placeholder="Order Date" />
+        <input type="date" id="orderDateEdit" placeholder="Order Date" />
       </div>
-      <!-- ✅ End of Customer Info Section -->
 
       <div id="itemsContainer"></div>
       <button type="button" id="addItemBtn">+ Add Item</button>
@@ -114,10 +117,5 @@
       </menu>
     </form>
   </dialog>
-
-  <!-- JS Libraries -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </body>
 </html>
-
