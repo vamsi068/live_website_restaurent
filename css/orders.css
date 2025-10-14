@@ -539,33 +539,82 @@ footer {
   background-color: #e68900;
 }
 
+
+
 .sold-items-section {
-  margin-top: 30px;
-  padding: 20px;
-  background: #e7ececdf;
-  border-radius: 12px;
-  color: #000000;
+  margin-top: 25px;
+  background: #f9fafb;
+  border-radius: 14px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
   transition: all 0.3s ease;
 }
 
-.sold-items-section h2 {
-  margin-bottom: 10px;
-  color: #000000;
+.sold-header {
+  background: #111827;
+  color: #facc15;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   cursor: pointer;
   user-select: none;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sold-header h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sold-items-list {
+  padding: 15px 20px;
+  background: #ffffff;
+  color: #111827;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+  overflow: hidden;
 }
 
 .sold-items-list.hidden {
-  display: none;
+  max-height: 0;
+  opacity: 0;
+  padding: 0 20px;
 }
 
 .sold-items-list ul {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 
 .sold-items-list li {
-  padding: 6px 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 8px 0;
+  font-size: 0.95rem;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
+
+.sold-items-list li:last-child {
+  border-bottom: none;
+}
+
+.triangle {
+  transition: transform 0.3s ease;
+}
+
+.hidden + .triangle {
+  transform: rotate(-90deg);
+}
+
+#clearFilter, #deleteAllBtn {
+  margin-left: 10px;
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
 
