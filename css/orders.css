@@ -538,3 +538,34 @@ footer {
 .orange-btn:hover {
   background-color: #e68900;
 }
+
+.sold-items-section {
+  margin-top: 30px;
+  padding: 20px;
+  background: #e7ececdf;
+  border-radius: 12px;
+  color: #000000;
+  transition: all 0.3s ease;
+}
+
+.sold-items-section h2 {
+  margin-bottom: 10px;
+  color: #000000;
+  cursor: pointer;
+  user-select: none;
+}
+
+.sold-items-list.hidden {
+  display: none;
+}
+
+.sold-items-list ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sold-items-list li {
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
