@@ -430,11 +430,73 @@ doc.text(`Total: INR ${o.total.toFixed(2)}`, 14, y);
   doc.save(`${o.id}_Bill.pdf`);
 }
 
+// =======================
+// SHOW TODAY'S SOLD ITEMS
+// =======================
+function displayTodaysSoldItems() {
+  const orders = JSON.parse(localStorage.getItem("orders")) || [];
+  const today = new Date().toLocaleDateString(); // e.g., "10/14/2025"
 
+  const todayOrders = orders.filter(o => {
+    const orderDate = new Date(o.date).toLocaleDateString();
+    return orderDate === today && o.items; // include only today's bills with items
+  });
+
+  const soldItems = {};
+
+  todayOrders.forEach(order => {
+    order.items.forEach(item => {
+      const name = item.name;
+      const qty = Number(item.qty) || 1;
+      soldItems[name] = (soldItems[name] || 0) + qty;
+    });
+  });
+
+  const container = document.getElementById("todaysSoldItems");
+  container.innerHTML = ""; // clear previous
+
+  if (Object.keys(soldItems).length === 0) {
+    container.innerHTML = `<p>No items sold today yet.</p>`;
+    return;
+  }
+
+  const list = document.createElement("ul");
+  list.style.listStyle = "none";
+  list.style.padding = "0";
+
+  Object.entries(soldItems).forEach(([name, qty]) => {
+    const li = document.createElement("li");
+    li.textContent = `${name} - ${qty}`;
+    list.appendChild(li);
+  });
+
+  container.appendChild(list);
+}
+
+// =======================
+// COLLAPSIBLE SECTION
+// =======================
+document.addEventListener("DOMContentLoaded", () => {
+  const header = document.querySelector(".sold-items-section h2");
+  const list = document.getElementById("todaysSoldItems");
+
+  if (header && list) {
+    header.style.cursor = "pointer";
+    header.addEventListener("click", () => {
+      list.classList.toggle("hidden");
+      header.textContent = list.classList.contains("hidden")
+        ? "Today's Sold Items ▶"
+        : "Today's Sold Items ▼";
+    });
+  }
+});
 
 /* ========= INIT ========= */
 document.addEventListener("DOMContentLoaded", () => {
   pageSize = Number(pageSizeEl?.value) || 10;
   sortMode = sortSelect?.value || "newest";
+
   renderOrders();
+  displayTodaysSoldItems(); // ✅ show today's sold items on page load
 });
+
