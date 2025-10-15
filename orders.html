@@ -35,6 +35,14 @@
       <div>Total Revenue: ₹<span id="totalRevenue">0</span></div>
     </section>
 
+    <!-- Best Sale Item Section -->
+    <section class="best-sale-section">
+      <h2>🔥 Best Sale Item</h2>
+      <div id="bestSaleContainer">
+        <p>Loading...</p>
+      </div>
+    </section>
+
     <!-- Today's Sold Items Section -->
     <section class="sold-items-section">
       <div class="sold-header" id="soldHeader" role="button" aria-expanded="true">
@@ -68,7 +76,7 @@
           <option value="10" selected>10</option>
           <option value="20">20</option>
         </select>
-        
+
         <button id="clearFilter" class="gray-btn">Clear Filter</button>
         <button id="deleteAllBtn" class="red-btn">Delete All Orders</button>
 
@@ -98,24 +106,29 @@
   </footer>
 
   <!-- EDIT MODAL -->
-  <dialog id="editModal">
+  <dialog id="editModal" class="edit-modal">
     <form id="editForm" method="dialog">
       <h2>Edit Order</h2>
+      <label>Customer Name:</label>
+      <input type="text" id="customerName" required>
 
-      <div class="customer-info">
-        <input type="text" id="customerName" placeholder="Customer Name" />
-        <input type="text" id="customerNumber" placeholder="Customer Number" />
-        <input type="date" id="orderDateEdit" placeholder="Order Date" />
-      </div>
+      <label>Mobile Number:</label>
+      <input type="text" id="customerNumber">
+
+      <label>Date:</label>
+      <input type="date" id="orderDateEdit">
 
       <div id="itemsContainer"></div>
-      <button type="button" id="addItemBtn">+ Add Item</button>
-      <p class="total-display">Total: ₹<span id="modalTotal">0</span></p>
+      <button type="button" id="addItemBtn" class="green-btn">➕ Add Item</button>
+
+      <p>Total: ₹<span id="modalTotal">0.00</span></p>
+
       <menu>
-        <button value="cancel" class="cancel-btn">Cancel</button>
-        <button type="submit" class="save-btn">Save Changes</button>
+        <button value="cancel" class="gray-btn">Cancel</button>
+        <button type="submit" class="green-btn">Save Changes</button>
       </menu>
     </form>
   </dialog>
+
 </body>
 </html>
