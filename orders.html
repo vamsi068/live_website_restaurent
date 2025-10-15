@@ -106,29 +106,24 @@
   </footer>
 
   <!-- EDIT MODAL -->
-  <dialog id="editModal" class="edit-modal">
+  <dialog id="editModal">
     <form id="editForm" method="dialog">
       <h2>Edit Order</h2>
-      <label>Customer Name:</label>
-      <input type="text" id="customerName" required>
 
-      <label>Mobile Number:</label>
-      <input type="text" id="customerNumber">
-
-      <label>Date:</label>
-      <input type="date" id="orderDateEdit">
+      <div class="customer-info">
+        <input type="text" id="customerName" placeholder="Customer Name" />
+        <input type="text" id="customerNumber" placeholder="Customer Number" />
+        <input type="date" id="orderDateEdit" placeholder="Order Date" />
+      </div>
 
       <div id="itemsContainer"></div>
-      <button type="button" id="addItemBtn" class="green-btn">➕ Add Item</button>
-
-      <p>Total: ₹<span id="modalTotal">0.00</span></p>
-
+      <button type="button" id="addItemBtn">+ Add Item</button>
+      <p class="total-display">Total: ₹<span id="modalTotal">0</span></p>
       <menu>
-        <button value="cancel" class="gray-btn">Cancel</button>
-        <button type="submit" class="green-btn">Save Changes</button>
+        <button value="cancel" class="cancel-btn">Cancel</button>
+        <button type="submit" class="save-btn">Save Changes</button>
       </menu>
     </form>
   </dialog>
-
 </body>
 </html>
