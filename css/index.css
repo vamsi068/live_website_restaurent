@@ -72,3 +72,21 @@ footer {
   text-align: center;
   color: white;
 }
+
+#editSpecialsModal {
+  backdrop-filter: blur(4px);
+}
+
+#editSpecialsModal::-webkit-scrollbar {
+  width: 8px;
+}
+
+#editSpecialsModal::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+#editSpecialsModal::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
