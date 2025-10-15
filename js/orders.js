@@ -127,6 +127,7 @@ function renderOrders() {
     paginationEl.innerHTML = "";
     // still update sold items
     displayTodaysSoldItems();
+    displayBestSaleItem();
     return;
   }
 
@@ -167,6 +168,7 @@ function renderOrders() {
 
   renderPagination(totalPages);
   displayTodaysSoldItems();
+
 }
 
 /* ========= PAGINATION ========= */
@@ -281,18 +283,18 @@ editForm?.addEventListener("submit", e => {
 function printOrder(index) {
   const o = orders[index];
   const w = window.open("", "_blank");
-  w.document.write(`
-    <html><head><title>Order #${escapeHtml(o.id)}</title></head><body>
-    <h2>Street Magic</h2>
-    <p>Order #${escapeHtml(o.id)} ${o.kot ? "(KOT)" : ""} - ${escapeHtml(new Date(o.date).toLocaleString())}</p>
-    <table border="1" cellpadding="5" cellspacing="0" width="100%">
-      <tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>
-      ${(o.items||[]).map(i => `<tr><td>${escapeHtml(i.name)}</td><td>${i.qty}</td><td>₹${formatCurrency(i.price)}</td><td>₹${formatCurrency(i.price * i.qty)}</td></tr>`).join("")}
-    </table>
-    <h3>Total: ₹${formatCurrency(o.total||0)}</h3>
-    <p>Customer: ${escapeHtml(o.customerName||"-")} | Mobile: ${escapeHtml(o.customerNumber||"-")}</p>
-    <script>window.print();<\/script>
-    </body></html>
+ w.document.write(`
+  <html>
+  <head>
+    <title>Order #${escapeHtml(o.id)}</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 20px; }
+      h2 { text-align: center; }
+      table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+      th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+    </style>
+  </head>
+  <body>
   `);
   w.document.close();
 }
@@ -472,15 +474,17 @@ function attachEvents() {
 
   // ✅ Clear Filter button now resets filters only
   clearFilterBtn?.addEventListener("click", () => {
-    filterDate = "";
-    searchText = "";
-    sortMode = "newest";
-    orderDateEl.value = "";
-    searchTextEl.value = "";
-    sortSelect.value = "newest";
-    currentPage = 1;
-    renderOrders();
-  });
+  filterDate = "";
+  searchText = "";
+  sortMode = "newest";
+  orderDateEl.value = "";
+  searchTextEl.value = "";
+  sortSelect.value = "newest";
+  currentPage = 1;
+  renderOrders();
+  displayBestSaleItem(); // ✅ add this
+});
+
 
   // ✅ NEW Delete All button (must exist in HTML)
   const deleteAllBtn = document.getElementById("deleteAllBtn");
@@ -492,13 +496,15 @@ function attachEvents() {
     saveOrders();
     renderOrders();
     displayTodaysSoldItems();
+    displayBestSaleItem();
   });
 
   orderDateEl?.addEventListener("change", e => {
-    filterDate = e.target.value;
-    currentPage = 1;
-    renderOrders();
-  });
+  filterDate = e.target.value;
+  currentPage = 1;
+  renderOrders();
+  displayBestSaleItem(); // ✅ refresh best sale based on selected date
+});
 
   sortSelect?.addEventListener("change", e => {
     sortMode = e.target.value;
@@ -563,21 +569,61 @@ function downloadBillPDF(index) {
   doc.save(`${o.id}_Bill.pdf`);
 }
 
+/* ========= BEST SALE ITEM (RESPECTS FILTER DATE) ========= */
+function displayBestSaleItem() {
+  const ordersLocal = JSON.parse(localStorage.getItem("orders")) || [];
+  const dateKey = filterDate || getLocalDateKey(new Date());
+
+  const filteredOrders = ordersLocal.filter(o => {
+    const orderDate = getLocalDateKey(o.date);
+    return orderDate === dateKey && Array.isArray(o.items);
+  });
+
+  const soldItems = {};
+  filteredOrders.forEach(order => {
+    order.items.forEach(item => {
+      const name = (item.name || "Unnamed Item").trim();
+      const qty = Number(item.qty) || 1;
+      soldItems[name] = (soldItems[name] || 0) + qty;
+    });
+  });
+
+  const container = document.getElementById("bestSaleContainer");
+  if (!container) return;
+  container.innerHTML = "";
+
+  const labelDate = filterDate
+    ? new Date(filterDate).toLocaleDateString()
+    : new Date().toLocaleDateString();
+
+  const entries = Object.entries(soldItems).sort((a, b) => b[1] - a[1]);
+  if (entries.length === 0) {
+    container.innerHTML = `<p>No sales on ${labelDate}.</p>`;
+    return;
+  }
+
+  const [bestItem, qty] = entries[0];
+  container.innerHTML = `
+    <div class="best-sale-card">
+      <h3>${escapeHtml(bestItem)}</h3>
+      <p><strong>Qty Sold:</strong> ${qty}</p>
+      <p><strong>Date:</strong> ${labelDate}</p>
+    </div>
+  `;
+}
+
 /* ========= STARTUP ========= */
 document.addEventListener("DOMContentLoaded", () => {
   // default pageSize + sort
   pageSize = Number(pageSizeEl?.value) || 10;
   sortMode = sortSelect?.value || "newest";
 
-  // if no orders exist, create a sample set for easy testing (optional).
-  // Remove or comment the block below in production.
+  // Seed sample data if empty (optional)
   if (!orders || orders.length === 0) {
-    // Sample seed (only if empty) — you can remove this block after testing
     const seed = [
       { id: generateOrderId(), date: new Date().toISOString(), items: [{name:"Egg Fried Rice", price:140, qty:2}], total:280, customerName:"", customerNumber:"" },
       { id: generateOrderId(), date: new Date().toISOString(), items: [{name:"Chicken Fried Rice", price:160, qty:1},{name:"Soft Drinks", price:40, qty:1}], total:200, customerName:"", customerNumber:"" }
     ];
-    // only seed if truly empty (comment out to not seed)
     // orders = seed;
     // saveOrders();
   }
@@ -585,4 +631,6 @@ document.addEventListener("DOMContentLoaded", () => {
   attachEvents();
   renderOrders();
   displayTodaysSoldItems();
+  displayBestSaleItem();
 });
+
