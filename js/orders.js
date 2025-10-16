@@ -150,7 +150,13 @@ function renderOrders() {
       </div>
 
       <div class="order-items">
-        <ul>${(order.items || []).map(it => `<li><span>${escapeHtml(it.name)} x${escapeHtml(it.qty)}</span><span>₹${formatCurrency((it.price||0) * (it.qty||0))}</span></li>`).join("")}</ul>
+        <ul>${(order.items || []).map(it => {
+          const variantText = it.variant ? ` (${escapeHtml(it.variant)})` : "";
+          return `<li>
+            <span>${escapeHtml(it.name)}${variantText} x${escapeHtml(it.qty)}</span>
+            <span>₹${formatCurrency((it.price||0) * (it.qty||0))}</span>
+          </li>`;
+        }).join("")}</ul>
       </div>
 
       <p><strong>Total: ₹${formatCurrency(order.total || 0)}</strong></p>
@@ -215,20 +221,22 @@ function openEdit(index) {
   const order = orders[index];
 
   itemsContainer.innerHTML = "";
-  (order.items || []).forEach(i => addItemRow(i.name, i.price, i.qty));
+  (order.items || []).forEach(i => addItemRow(i.name, i.price, i.qty, i.variant || ""));
 
   document.getElementById("customerName").value = order.customerName || "";
   document.getElementById("customerNumber").value = order.customerNumber || order.customerMobile || "";
   document.getElementById("orderDateEdit").value = toLocalISODate(order.date) || "";
   updateModalTotal();
-  try { editModal.showModal(); } catch (e) { /* fallback */ editModal.setAttribute('open',''); }
+  try { editModal.showModal(); } catch (e) { editModal.setAttribute('open',''); }
 }
 
-function addItemRow(name = "", price = "", qty = "") {
+
+function addItemRow(name = "", price = "", qty = "", variant = "") {
   const row = document.createElement("div");
   row.className = "item-row";
   row.innerHTML = `
     <input type="text" placeholder="Item name" value="${escapeHtml(name)}">
+    <input type="text" placeholder="Variant (optional)" value="${escapeHtml(variant)}">
     <input type="number" placeholder="Price" value="${escapeHtml(price)}" min="0">
     <input type="number" placeholder="Qty" value="${escapeHtml(qty)}" min="1">
     <button type="button" class="remove-item">🗑️</button>
@@ -239,16 +247,6 @@ function addItemRow(name = "", price = "", qty = "") {
   updateModalTotal();
 }
 
-function updateModalTotal() {
-  let total = 0;
-  itemsContainer.querySelectorAll(".item-row").forEach(row => {
-    const [nameEl, priceEl, qtyEl] = row.querySelectorAll("input");
-    const p = parseFloat(priceEl.value || 0);
-    const q = parseInt(qtyEl.value || 0, 10);
-    if (!isNaN(p) && !isNaN(q)) total += p * q;
-  });
-  modalTotal.textContent = total.toFixed(2);
-}
 
 /* handle edit form submit */
 editForm?.addEventListener("submit", e => {
@@ -256,12 +254,13 @@ editForm?.addEventListener("submit", e => {
 
   const updatedItems = [];
   itemsContainer.querySelectorAll(".item-row").forEach(row => {
-    const [nameEl, priceEl, qtyEl] = row.querySelectorAll("input");
+    const [nameEl, variantEl, priceEl, qtyEl] = row.querySelectorAll("input, select");
     const name = nameEl.value.trim();
+    const variant = variantEl.value.trim();
     const price = parseFloat(priceEl.value || 0);
     const qty = parseInt(qtyEl.value || 0, 10);
     if (name && price > 0 && qty > 0) {
-      updatedItems.push({ name, price, qty });
+      updatedItems.push({ name, variant, price, qty });
     }
   });
 
@@ -279,25 +278,62 @@ editForm?.addEventListener("submit", e => {
   renderOrders();
 });
 
+
+
 /* ========= PRINT / EXPORT ========= */
 function printOrder(index) {
   const o = orders[index];
+  if (!o) return alert("Order not found!");
+
   const w = window.open("", "_blank");
- w.document.write(`
-  <html>
-  <head>
-    <title>Order #${escapeHtml(o.id)}</title>
-    <style>
-      body { font-family: Arial, sans-serif; margin: 20px; }
-      h2 { text-align: center; }
-      table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-      th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
-    </style>
-  </head>
-  <body>
+  w.document.write(`
+    <html>
+    <head>
+      <title>Order #${escapeHtml(o.id)}</title>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h2 { text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+        tfoot td { font-weight: bold; }
+      </style>
+    </head>
+    <body>
+      <h2>Street Magic Restaurant</h2>
+      <p><strong>Order:</strong> ${escapeHtml(o.id)}<br>
+      <strong>Date:</strong> ${new Date(o.date).toLocaleString()}<br>
+      <strong>Customer:</strong> ${escapeHtml(o.customerName || "-")}<br>
+      <strong>Mobile:</strong> ${escapeHtml(o.customerNumber || "-")}</p>
+
+      <table>
+        <thead>
+          <tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>
+        </thead>
+        <tbody>
+          ${(o.items || []).map(it => `
+            <tr>
+              <td>${escapeHtml(it.name)}${it.variant ? ` (${escapeHtml(it.variant)})` : ""}</td>
+              <td>${escapeHtml(it.qty)}</td>
+              <td>₹${formatCurrency(it.price)}</td>
+              <td>₹${formatCurrency(it.price * it.qty)}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+        <tfoot>
+          <tr><td colspan="3">Total</td><td>₹${formatCurrency(o.total || 0)}</td></tr>
+        </tfoot>
+      </table>
+
+      <script>
+        window.print();
+        window.onafterprint = () => window.close();
+      <\/script>
+    </body>
+    </html>
   `);
   w.document.close();
 }
+
 
 printAllBtn?.addEventListener("click", () => {
   const w = window.open("", "_blank");
@@ -549,25 +585,46 @@ function attachEvents() {
 /* Download single order as formatted PDF */
 function downloadBillPDF(index) {
   const o = orders[index];
+  if (!o) return alert("Order not found!");
+
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
   let y = 20;
-  doc.setFontSize(14);
-  doc.text("Street Magic Restaurant", 14, y); y += 12;
+
+  doc.setFontSize(16);
+  doc.text("Street Magic Restaurant", 14, y);
+  y += 10;
   doc.setFontSize(11);
-  doc.text(`Order: ${o.id}`, 14, y); y += 10;
-  doc.text(`Date: ${new Date(o.date).toLocaleString()}`, 14, y); y += 12;
-  doc.text(`Customer: ${o.customerName || "-"}`, 14, y); y += 10;
+  doc.text(`Order ID: ${o.id}`, 14, y); y += 8;
+  doc.text(`Date: ${new Date(o.date).toLocaleString()}`, 14, y); y += 8;
+  doc.text(`Customer: ${o.customerName || "-"}`, 14, y); y += 8;
   doc.text(`Mobile: ${o.customerNumber || "-"}`, 14, y); y += 12;
-  doc.text("----", 14, y); y += 8;
-  (o.items||[]).forEach(it => {
-    doc.text(`${it.name} x${it.qty}  ₹${formatCurrency((it.price||0)*it.qty)}`, 14, y); y += 8;
-    if (y > 270) { doc.addPage(); y = 20; }
+
+  doc.line(14, y, 195, y); y += 6;
+  doc.text("Item", 14, y);
+  doc.text("Qty", 90, y);
+  doc.text("Price", 130, y);
+  doc.text("Total", 170, y);
+  y += 4;
+  doc.line(14, y, 195, y); y += 6;
+
+  doc.setFontSize(10);
+  (o.items || []).forEach(it => {
+    doc.text(`${it.name}${it.variant ? " (" + it.variant + ")" : ""}`, 14, y);
+    doc.text(String(it.qty), 90, y);
+    doc.text(`Rs. ${formatCurrency(it.price)}`, 130, y);
+    doc.text(`Rs. ${formatCurrency(it.price * it.qty)}`, 170, y);
+    y += 6;
+    if (y > 280) { doc.addPage(); y = 20; }
   });
-  doc.text("----", 14, y); y += 10;
-  doc.text(`Total: ₹${formatCurrency(o.total || 0)}`, 14, y);
+
+  y += 4;
+  doc.line(14, y, 195, y); y += 8;
+  doc.setFontSize(12);
+  doc.text(`Grand Total: Rs. ${formatCurrency(o.total || 0)}`, 14, y);
   doc.save(`${o.id}_Bill.pdf`);
 }
+
 
 /* ========= BEST SALE ITEM (RESPECTS FILTER DATE) ========= */
 function displayBestSaleItem() {
@@ -633,4 +690,25 @@ document.addEventListener("DOMContentLoaded", () => {
   displayTodaysSoldItems();
   displayBestSaleItem();
 });
+
+
+/* ========= UPDATE MODAL TOTAL ========= */
+function updateModalTotal() {
+  const rows = itemsContainer.querySelectorAll(".item-row");
+  let total = 0;
+
+  rows.forEach(row => {
+    const priceEl = row.querySelector('input[placeholder="Price"]');
+    const qtyEl = row.querySelector('input[placeholder="Qty"]');
+    const price = parseFloat(priceEl?.value || 0);
+    const qty = parseInt(qtyEl?.value || 0, 10);
+    if (!isNaN(price) && !isNaN(qty)) {
+      total += price * qty;
+    }
+  });
+
+  if (modalTotal) {
+    modalTotal.textContent = `₹${formatCurrency(total)}`;
+  }
+}
 
