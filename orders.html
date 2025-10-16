@@ -10,6 +10,7 @@
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
+
 <body>
   <!-- HEADER -->
   <header>
@@ -116,7 +117,28 @@
         <input type="date" id="orderDateEdit" placeholder="Order Date" />
       </div>
 
-      <div id="itemsContainer"></div>
+      <div id="itemsContainer">
+        <!-- Example item (added dynamically by JS) -->
+        <!-- Each item block should include variant dropdown -->
+        <!-- Template for reference -->
+        <!--
+        <div class="item-row">
+          <input type="text" class="item-name" placeholder="Item Name" value="Burger" />
+          <select class="variant-select">
+            <option value="">Select Variant</option>
+            <option value="1">1</option>
+            <option value="1/2">1/2</option>
+            <option value="2/3">2/3</option>
+            <option value="3/4">3/4</option>
+            <option value="1/4">1/4</option>
+          </select>
+          <input type="number" class="item-qty" placeholder="Qty" value="1" />
+          <input type="number" class="item-price" placeholder="Price" value="120" />
+          <button type="button" class="remove-item-btn">✕</button>
+        </div>
+        -->
+      </div>
+
       <button type="button" id="addItemBtn">+ Add Item</button>
       <p class="total-display">Total: ₹<span id="modalTotal">0</span></p>
       <menu>
