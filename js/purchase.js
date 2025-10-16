@@ -1,4 +1,4 @@
-// js/purchase.js (FINAL MERGED + PRODUCT CHART + CUSTOM DATE INPUT SUPPORT)
+// js/purchase.js (UPDATED with date filter, units, last-entry-first)
 
 // ===== Data =====
 let inventory = JSON.parse(localStorage.getItem("inventory")) || {};
@@ -28,7 +28,7 @@ function renderProductSelect() {
 }
 
 // ===== Inventory Summary (with badges + edit buttons) =====
-function renderInventorySummary() {
+function renderInventorySummary(dateFilter = "") {
   const summaryContainer = document.getElementById("inventorySummary");
   const countBadge = document.getElementById("productCountBadge");
   const unitBadge = document.getElementById("unitCountBadge");
@@ -39,8 +39,12 @@ function renderInventorySummary() {
   let totalUnits = 0;
   let productCount = 0;
 
-  Object.keys(inventory).forEach((productName) => {
-    const units = inventory[productName] || 0;
+  Object.keys(inventory).forEach(productName => {
+    // Filter purchases by date for this product
+    let units = purchases
+      .filter(p => p.item === productName && (!dateFilter || p.date.startsWith(dateFilter)))
+      .reduce((sum, p) => sum + p.qty, 0);
+
     totalUnits += units;
     productCount++;
 
@@ -84,14 +88,16 @@ function editProductName(oldName) {
   );
 
   saveData();
-  renderInventorySummary();
+  renderInventorySummary(filterDate);
   renderPurchases();
   renderProductSelect();
 }
 
 // ===== Update Total Spent =====
 function updateTotalSpent() {
-  const total = purchases.reduce((sum, p) => sum + (p.qty * p.price), 0);
+  const total = purchases
+    .filter(p => !filterDate || p.date.startsWith(filterDate))
+    .reduce((sum, p) => sum + (p.qty * p.price), 0);
   const el = document.getElementById("totalSpentCard");
   if (el) el.innerHTML = `<h4>Total Spent</h4><p>₹${total.toLocaleString("en-IN")}</p>`;
 }
@@ -100,7 +106,7 @@ function updateTotalSpent() {
 function updateTodaySpent() {
   const today = new Date().toISOString().slice(0, 10);
   const total = purchases
-    .filter(p => p.date.startsWith(today))
+    .filter(p => p.date.startsWith(today) && (!filterDate || p.date.startsWith(filterDate)))
     .reduce((sum, p) => sum + (p.qty * p.price), 0);
 
   const el = document.getElementById("todaySpentCard");
@@ -111,7 +117,7 @@ function updateTodaySpent() {
 function updateMonthSpent() {
   const ym = new Date().toISOString().slice(0, 7);
   const total = purchases
-    .filter(p => p.date.startsWith(ym))
+    .filter(p => p.date.startsWith(ym) && (!filterDate || p.date.startsWith(filterDate)))
     .reduce((sum, p) => sum + (p.qty * p.price), 0);
 
   const el = document.getElementById("monthSpentCard");
@@ -125,15 +131,15 @@ function updateLastMonthSpent() {
   const lastMonth = lastMonthDate.toISOString().slice(0, 7);
 
   const total = purchases
-    .filter(p => p.date.startsWith(lastMonth))
+    .filter(p => p.date.startsWith(lastMonth) && (!filterDate || p.date.startsWith(filterDate)))
     .reduce((sum, p) => sum + (p.qty * p.price), 0);
 
   const el = document.getElementById("lastMonthSpentCard");
   if (el) el.innerHTML = `<h4>Last Month's Purchases</h4><p>₹${total.toLocaleString("en-IN")}</p>`;
 }
 
-// ===== Chart.js - Purchases Chart (Today/This/Last Month) =====
-function updatePurchaseChart() {
+// ===== Chart.js - Purchases Chart =====
+function updatePurchaseChart(dateFilter = "") {
   const now = new Date();
   const today = now.toISOString().slice(0, 10);
   const thisMonth = now.toISOString().slice(0, 7);
@@ -141,15 +147,15 @@ function updatePurchaseChart() {
   const lastMonth = lastMonthDate.toISOString().slice(0, 7);
 
   const todayTotal = purchases
-    .filter(p => p.date.startsWith(today))
+    .filter(p => p.date.startsWith(today) && (!dateFilter || p.date.startsWith(dateFilter)))
     .reduce((sum, p) => sum + (p.qty * p.price), 0);
 
   const thisMonthTotal = purchases
-    .filter(p => p.date.startsWith(thisMonth))
+    .filter(p => p.date.startsWith(thisMonth) && (!dateFilter || p.date.startsWith(dateFilter)))
     .reduce((sum, p) => sum + (p.qty * p.price), 0);
 
   const lastMonthTotal = purchases
-    .filter(p => p.date.startsWith(lastMonth))
+    .filter(p => p.date.startsWith(lastMonth) && (!dateFilter || p.date.startsWith(dateFilter)))
     .reduce((sum, p) => sum + (p.qty * p.price), 0);
 
   const ctxEl = document.getElementById("purchaseChart");
@@ -177,9 +183,7 @@ function updatePurchaseChart() {
       scales: {
         y: {
           beginAtZero: true,
-          ticks: {
-            callback: value => `₹${value.toLocaleString("en-IN")}`
-          }
+          ticks: { callback: value => `₹${value.toLocaleString("en-IN")}` }
         }
       }
     }
@@ -187,13 +191,12 @@ function updatePurchaseChart() {
 }
 
 // ===== Product Chart (per-item Quantity + Amount) =====
-function updateProductChart() {
+function updateProductChart(dateFilter = "") {
   const totals = {};
-
   purchases.forEach(p => {
-    if (!totals[p.item]) {
-      totals[p.item] = { qty: 0, amount: 0 };
-    }
+    if (dateFilter && !p.date.startsWith(dateFilter)) return;
+
+    if (!totals[p.item]) totals[p.item] = { qty: 0, amount: 0, unit: p.unit || "" };
     totals[p.item].qty += p.qty;
     totals[p.item].amount += p.qty * p.price;
   });
@@ -213,18 +216,8 @@ function updateProductChart() {
     data: {
       labels,
       datasets: [
-        {
-          label: "Quantity",
-          data: qtyData,
-          backgroundColor: "#3498db",
-          yAxisID: "y1"
-        },
-        {
-          label: "Amount (₹)",
-          data: amountData,
-          backgroundColor: "#e67e22",
-          yAxisID: "y2"
-        }
+        { label: "Quantity", data: qtyData, backgroundColor: "#3498db", yAxisID: "y1" },
+        { label: "Amount (₹)", data: amountData, backgroundColor: "#e67e22", yAxisID: "y2" }
       ]
     },
     options: {
@@ -232,20 +225,9 @@ function updateProductChart() {
       maintainAspectRatio: false,
       plugins: { legend: { position: "top" } },
       scales: {
-        y1: {
-          beginAtZero: true,
-          position: "left",
-          title: { display: true, text: "Quantity" }
-        },
-        y2: {
-          beginAtZero: true,
-          position: "right",
-          title: { display: true, text: "Amount (₹)" },
-          ticks: {
-            callback: value => `₹${value.toLocaleString("en-IN")}`
-          },
-          grid: { drawOnChartArea: false }
-        }
+        y1: { beginAtZero: true, position: "left", title: { display: true, text: "Quantity" } },
+        y2: { beginAtZero: true, position: "right", title: { display: true, text: "Amount (₹)" },
+          ticks: { callback: value => `₹${value.toLocaleString("en-IN")}` }, grid: { drawOnChartArea: false } }
       }
     }
   });
@@ -256,8 +238,12 @@ function renderPurchases() {
   const container = document.getElementById("purchaseRecords");
   if (!container) return;
 
+  // Apply date filter
   let list = purchases.slice();
   if (filterDate) list = list.filter(p => p.date.startsWith(filterDate));
+
+  // Show last entry first
+  list = list.reverse();
 
   if (list.length === 0) {
     container.innerHTML = "<p>No purchase records.</p>";
@@ -267,7 +253,7 @@ function renderPurchases() {
       return `
         <div class="record-card">
           <h4>${p.item}</h4>
-          <p>Qty: ${p.qty}</p>
+          <p>Qty: ${p.qty} ${p.unit || ""}</p>
           <p>₹${p.price} each</p>
           <p>Total: ₹${p.qty * p.price}</p>
           <small>${new Date(p.date).toLocaleDateString()}</small>
@@ -284,9 +270,9 @@ function renderPurchases() {
   updateTodaySpent();
   updateMonthSpent();
   updateLastMonthSpent();
-  updatePurchaseChart();
-  updateProductChart();
-  renderInventorySummary();
+  updatePurchaseChart(filterDate);
+  updateProductChart(filterDate);
+  renderInventorySummary(filterDate);
   renderProductSelect();
 }
 
@@ -308,7 +294,7 @@ function clearForm() {
 // ===== Add / Update Purchase =====
 document.getElementById("savePurchaseBtn").addEventListener("click", () => {
   const product = document.getElementById("productSelect").value;
-  const qty = parseInt(document.getElementById("quantityInput").value, 10);
+  const qty = parseFloat(document.getElementById("quantityInput").value);
   const price = parseFloat(document.getElementById("priceInput").value);
   const dateInput = document.getElementById("purchaseDateInput").value;
   const date = dateInput ? new Date(dateInput).toISOString() : new Date().toISOString();
@@ -318,9 +304,17 @@ document.getElementById("savePurchaseBtn").addEventListener("click", () => {
     return;
   }
 
+  // Ask for unit if adding new
+  let unit = "pcs";
+  if (editIndex === -1) {
+    unit = prompt("Enter unit (e.g., pcs, kg, g, l) for this product:", "pcs") || "pcs";
+  } else {
+    unit = purchases[editIndex].unit || "pcs";
+  }
+
   if (editIndex === -1) {
     inventory[product] = (inventory[product] || 0) + qty;
-    purchases.push({ item: product, qty, price, date });
+    purchases.push({ item: product, qty, price, date, unit });
   } else {
     const old = purchases[editIndex];
     if (!old) {
@@ -337,7 +331,7 @@ document.getElementById("savePurchaseBtn").addEventListener("click", () => {
 
     inventory[product] = (inventory[product] || 0) + qty;
 
-    purchases[editIndex] = { item: product, qty, price, date };
+    purchases[editIndex] = { item: product, qty, price, date, unit };
   }
 
   saveData();
