@@ -40,7 +40,7 @@ function saveOrders() {
 }
 
 function generateOrderId() {
-  let lastNumber = parseInt(localStorage.getItem("lastOrderNumber") || "4725", 10);
+  let lastNumber = parseInt(localStorage.getItem("lastOrderNumber") || "4812", 20);
   lastNumber++;
   localStorage.setItem("lastOrderNumber", lastNumber);
   return `ORD-${lastNumber}`;
@@ -48,7 +48,7 @@ function generateOrderId() {
 
 function ensureOrderIds() {
   let modified = false;
-  let last = parseInt(localStorage.getItem("lastOrderNumber") || "4725", 10);
+  let last = parseInt(localStorage.getItem("lastOrderNumber") || "4812", 20);
   orders.forEach(o => {
     if (!o.id || !o.id.startsWith("ORD-")) {
       last++;
@@ -711,4 +711,5 @@ function updateModalTotal() {
     modalTotal.textContent = `₹${formatCurrency(total)}`;
   }
 }
+
 
