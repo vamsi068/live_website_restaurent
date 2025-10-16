@@ -61,10 +61,50 @@
 
     <!-- ✅ Today’s Specials -->
     <h3 class="text-2xl font-bold mb-6">🍽️ Today’s Specials</h3>
+
+    <!-- ✅ Edit Specials Button -->
+    <div class="flex justify-center mb-4">
+      <button id="editSpecialsBtn"
+        class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg shadow">
+        ✏️ Edit Specials
+      </button>
+
+    </div>
+
+    <!-- Specials Container -->
     <div id="specials-container" class="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-6xl mx-auto">
       <!-- JS will inject specials -->
     </div>
   </main>
+
+  <!-- ✅ Edit Specials Modal with Scroll + Add/Remove -->
+<div id="editSpecialsModal"
+  class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-xl shadow-lg p-6 w-[90%] max-w-2xl relative max-h-[90vh] overflow-y-auto">
+    <h3 class="text-2xl font-bold mb-4 text-center sticky top-0 bg-white pb-2">Edit Today’s Specials</h3>
+
+    <div id="editSpecialsForm" class="space-y-4 mb-4"></div>
+
+    <div class="flex justify-between items-center mt-4 sticky bottom-0 bg-white py-3">
+      <button id="addSpecialBtn"
+        class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
+        ➕ Add New
+      </button>
+      <div class="flex gap-2">
+        <button id="saveSpecialsBtn"
+          class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg">
+          💾 Save
+        </button>
+        <button id="closeSpecialsModal"
+          class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg">
+          ✖ Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 
   <!-- ✅ Footer -->
   <footer class="bg-black text-white text-center p-4 mt-6">
