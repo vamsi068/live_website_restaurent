@@ -162,7 +162,10 @@ function renderMenu() {
         card.draggable = true;
 
         card.innerHTML = `
-          <h4>${escapeHtml(item.name)}</h4>
+          <div class="item-image">
+            <img src="${item.image || 'images/default-food.png'}" alt="${escapeHtml(item.name)}" />
+          </div>
+          <h4 class="item-name">${escapeHtml(item.name)}</h4>
           <div class="quantity-options">
             ${
               item.variants && item.variants.length > 0
@@ -310,7 +313,7 @@ function renderCart() {
     li.innerHTML = `
       <div class="cart-info">
         <span class="cart-name">${escapeHtml(c.name)}</span>
-        <small class="cart-variant">(${escapeHtml(c.variantQty) || "Regular"})</small>
+        <small class="cart-variant">${c.variantQty ? `(${escapeHtml(c.variantQty)})` : ""}</small>
       </div>
       <div class="cart-controls">
         <button class="qty-btn" onclick="updateQty('${c.key}',-1)">-</button>
@@ -376,6 +379,11 @@ function renderVariantInputs() {
 
 
 function openAddModal() {
+  const preview = document.getElementById("imagePreview");
+  if (preview) {
+    preview.src = uploadedImageBase64 || 'images/default-food.png';
+  }
+
   editIndex = -1;
   currentVariants = [];
 
@@ -384,10 +392,10 @@ function openAddModal() {
   document.getElementById("newItemSubcategory").value = "";
 
   renderVariantInputs();
-   document.querySelectorAll(".dropdown-list").forEach(d => d.classList.remove("visible"));
+  document.querySelectorAll(".dropdown-list").forEach(d => d.classList.remove("visible"));
+
   modal.style.display = "block";
 }
-
 
 
 function editMenuItemById(id) {
@@ -395,13 +403,20 @@ function editMenuItemById(id) {
   if (idx === -1) return;
   editIndex = idx;
   const it = menuItems[idx];
+
   document.getElementById("newItemName").value = it.name;
   document.getElementById("newItemCategory").value = it.category;
   document.getElementById("newItemSubcategory").value = it.subcategory;
   currentVariants = JSON.parse(JSON.stringify(it.variants || []));
   renderVariantInputs();
+  
+  // Set image preview for editing
+  uploadedImageBase64 = it.image || "";
+  document.getElementById("imagePreview").src = uploadedImageBase64 || 'images/default-food.png';
+
   modal.style.display = "block";
 }
+
 
 function deleteMenuItemById(id) {
   if (!confirm("Delete this item?")) return;
@@ -490,14 +505,19 @@ let basePrice = parseFloat(document.getElementById("newItemPrice")?.value || 0);
 
 
 
+const imageUrl = uploadedImageBase64 || localStorage.getItem("lastUploadedImage") || "";
+
+
 const newItem = {
   id: editIndex >= 0 ? menuItems[editIndex].id : generateId(),
   name,
   category: cat,
   subcategory: sub,
   variants,
-  price: basePrice || (variants[0]?.price ?? 0)
+  price: basePrice || (variants[0]?.price ?? 0),
+  image: imageUrl
 };
+
 
   if (editIndex >= 0) {
     menuItems[editIndex] = newItem;
@@ -515,11 +535,12 @@ localStorage.setItem("lastSubcategory", lastSubcategory);
   renderMenu();
 }
 
-
   if (t.id === "closeModal" || t.classList.contains("close")) {
-    modal.style.display = "none";
-    return;
-  }
+  modal.style.display = "none";
+  uploadedImageBase64 = "";
+  localStorage.removeItem("lastUploadedImage");
+  return;
+}
 
   if (t.id === "clearMenuBtn") {
     if (confirm("Are you sure you want to delete ALL menu items?")) {
@@ -558,21 +579,26 @@ function saveOrder(type) {
   const table = document.getElementById("tableSelect").value || "N/A";
 
   const customerName = document.getElementById("orderCustomerName")?.value.trim() || "";
-const customerMobile = document.getElementById("orderCustomerMobile")?.value.trim() || "";
+  const customerMobile = document.getElementById("orderCustomerMobile")?.value.trim() || "";
 
-const newOrder = {
+  const newOrder = {
     id: generateId(),
     type,
     table,
     customerName,
-    customerMobile,  // ✅ stored as "customerMobile"
-    items: [...cart],
+    customerMobile,
+    items: cart.map(c => ({
+  name: c.name,
+  variant: c.variantQty || "", // ✅ properly transfer variant
+  price: c.price,
+  qty: c.qty
+})),
+
     subtotal,
     discount,
     total,
-   date: new Date().toISOString(),
-};
-
+    date: new Date().toISOString(),
+  };
 
   orders.push(newOrder);
   localStorage.setItem("orders", JSON.stringify(orders));
@@ -580,12 +606,11 @@ const newOrder = {
   // Reset cart after saving
   cart = [];
   renderCart();
-
-  // Update previous orders section
   renderPreviousOrders();
 
   return newOrder;
 }
+
 
 function printKOT() {
   if (cart.length === 0) return alert("Cart is empty!");
@@ -618,11 +643,15 @@ function printKOT() {
   kotText += makeLine() + "\n";
 
   order.items.forEach((item, index) => {
-    const no = (index + 1).toString().padEnd(3, " ");
-    const name = item.name.length > 20 ? item.name.slice(0, 20) : item.name.padEnd(20, " ");
-    const qty = item.qty.toString().padStart(8, " ");
-    kotText += `${no}  ${name}${qty}\n`;
-  });
+  const no = (index + 1).toString().padEnd(3, " ");
+  let displayName = item.name;
+  if (item.variant || item.variantQty)
+  displayName += ` (${item.variant || item.variantQty})`;
+  displayName = displayName.length > 20 ? displayName.slice(0, 20) : displayName.padEnd(20, " ");
+  const qty = item.qty.toString().padStart(8, " ");
+  kotText += `${no}  ${displayName}${qty}\n`;
+});
+
 
   kotText += makeLine() + "\n";
   kotText += `Total Items: ${order.items.length}   Quantity: ${order.items.reduce((a, b) => a + b.qty, 0)}\n`;
@@ -727,20 +756,21 @@ function renderPreviousOrders() {
     <h4 class="prev-title">Previous Bill</h4>
     <hr>
     <p><strong>Date:</strong> ${dateStr} | <strong>Time:</strong> ${timeStr}</p>
-${o.customerName ? `<p><strong>Name:</strong> ${escapeHtml(o.customerName)}</p>` : ""}
-${o.customerMobile ? `<p><strong>Mobile:</strong> ${escapeHtml(o.customerMobile)}</p>` : ""}
+      ${o.customerName ? `<p><strong>Name:</strong> ${escapeHtml(o.customerName)}</p>` : ""}
+      ${o.customerMobile ? `<p><strong>Mobile:</strong> ${escapeHtml(o.customerMobile)}</p>` : ""}
 
     <div class="prev-items">
   `;
 
   o.items.forEach((it) => {
-    html += `
-      <div class="prev-row">
-        <span>${escapeHtml(it.name)} x${it.qty}</span>
-        <span>₹${(it.price * it.qty).toFixed(2)}</span>
-      </div>
-    `;
-  });
+  html += `
+    <div class="prev-row">
+      <span>${escapeHtml(it.name)}${it.variant ? ' (' + escapeHtml(it.variant) + ')' : ''} x${it.qty}</span>
+      <span>₹${(it.price * it.qty).toFixed(2)}</span>
+    </div>
+  `;
+});
+
 
   html += `
     </div>
@@ -879,4 +909,25 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+let uploadedImageBase64 = ""; // Store the base64 image temporarily
+
+document.getElementById("newItemImageUpload")?.addEventListener("change", function (e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function (ev) {
+    uploadedImageBase64 = ev.target.result;
+    localStorage.setItem("lastUploadedImage", uploadedImageBase64);
+    document.getElementById("imagePreview").src = uploadedImageBase64;
+  };
+  reader.readAsDataURL(file);
+});
+
+
+
+
+
+
 
