@@ -1,8 +1,7 @@
+document.addEventListener('DOMContentLoaded', function(){
 // ===============================
 // Street Magic - Home Page Script
 // ===============================
-
-console.log("✅ Index page loaded");
 
 // ✅ Highlight active navigation link
 const currentPage = window.location.pathname.split("/").pop();
@@ -149,4 +148,6 @@ saveBtn.addEventListener("click", () => {
 closeBtn.addEventListener("click", () => {
   modal.classList.add("hidden");
   uploadedImages = {};
+});
+
 });
