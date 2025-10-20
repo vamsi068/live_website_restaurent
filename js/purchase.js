@@ -1,3 +1,4 @@
+document.addEventListener('DOMContentLoaded', function(){
 // ===========================================================
 // purchase.js — Final Version (with Edit Modal & Scoped Handlers)
 // ===========================================================
@@ -557,3 +558,5 @@ function openEditModal(productName) {
 
 // ===== Initial Load =====
 renderAll();
+
+});
