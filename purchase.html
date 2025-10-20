@@ -25,10 +25,12 @@
 
   <!-- Add / Update Form -->
   <div class="purchase-form">
-    <button id="newItemBtn" class="btn">+ New Item</button>
     
+
+    <!-- 🔹 Product Field (with datalist) -->
     <label>Product:
-      <select id="productSelect"></select>
+      <input list="productList" id="productInput" placeholder="Type or select product" />
+      <datalist id="productList"></datalist>
     </label>
     
     <label>Quantity:
@@ -39,20 +41,19 @@
       <input type="number" id="priceInput" min="0" value="0"/>
     </label>
     
-    <!-- 🔹 Added Purchase Date field -->
+    <!-- 🔹 Purchase Date field -->
     <label>Purchase Date:
       <input type="date" id="purchaseDateInput" />
     </label>
     
-    
     <button id="savePurchaseBtn" class="btn primary">Add / Update Purchase</button>
+    <button id="newItemBtn" class="btn">+ New Item</button>
   </div>
 
-  <!-- Filter -->
+  <!-- 🔹 Filter (auto update, no Apply button) -->
   <div class="filter-bar">
     <label for="filterDate">Filter by Date:</label>
     <input type="date" id="filterDate"/>
-    <button id="applyFilterBtn">Apply Filter</button>
     <button id="clearFilterBtn">Clear</button>
   </div>
 
@@ -91,8 +92,21 @@
     <canvas id="purchaseChart"></canvas>
   </div>
 
-  <div id="purchaseRecords" class="records-grid"></div>
-
+  <!-- Purchase Records Grid -->
+  <div id="purchaseRecords" class="records-grid">
+    <!-- Example (JS-generated):
+    <div class="record-card">
+      <h4>Product Name</h4>
+      <p>Qty: 10</p>
+      <p>Price: ₹200</p>
+      <p>Date: 2025-10-19</p>
+      <div class="actions">
+        <button class="edit-btn" onclick="editPurchase(${globalIndex})">Edit</button>
+        <button class="delete-btn" onclick="deletePurchase(${globalIndex})">Delete</button>
+      </div>
+    </div>
+    -->
+  </div>
 </main>
 
 <footer>
