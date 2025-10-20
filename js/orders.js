@@ -165,7 +165,7 @@ function renderOrders() {
       <div class="order-actions">
         <button class="green-btn" data-action="edit" data-idx="${globalIndex}">✏️ Edit</button>
         <button class="blue-btn" data-action="print" data-idx="${globalIndex}">🖨️ Print</button>
-        <button class="orange-btn" data-action="pdf" data-idx="${globalIndex}">📄 Bill PDF</button>
+        <button class="bill-btn" data-idx="${globalIndex}">📱 WhatsApp Bill</button>
         <button class="red-btn" data-action="delete" data-idx="${globalIndex}">🗑️ Delete</button>
       </div>
     `;
@@ -176,6 +176,49 @@ function renderOrders() {
   displayTodaysSoldItems();
 
 }
+
+function renderCustomers() {
+  const customersListEl = document.getElementById("customersList");
+
+  if (customers.length === 0) {
+    customersListEl.innerHTML = "<p>No customers yet.</p>";
+    return;
+  }
+
+  const tableHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Number</th>
+          <th>Total Orders</th>
+          <th>Total Purchase (₹)</th>
+          <th>Reward Points</th>
+          <th>Free Meal Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${customers
+          .map(
+            c => `
+          <tr>
+            <td>${c.name}</td>
+            <td>${c.number}</td>
+            <td>${c.totalOrders}</td>
+            <td>${c.totalAmount.toFixed(2)}</td>
+            <td>${c.rewardPoints}</td>
+            <td>${c.freeMealEligible ? "🎉 Eligible!" : "❌ Not Yet"}</td>
+          </tr>
+        `
+          )
+          .join("")}
+      </tbody>
+    </table>
+  `;
+
+  customersListEl.innerHTML = tableHTML;
+}
+
 
 /* ========= PAGINATION ========= */
 function renderPagination(totalPages) {
@@ -496,15 +539,26 @@ if (soldHeader) {
 function attachEvents() {
   // Delegated actions for order card buttons
   ordersListEl.addEventListener("click", (ev) => {
-    const btn = ev.target.closest("button[data-action]");
-    if (!btn) return;
-    const idx = Number(btn.dataset.idx);
-    const action = btn.dataset.action;
-    if (action === "edit") openEdit(idx);
-    if (action === "print") printOrder(idx);
-    if (action === "pdf") downloadBillPDF(idx);
-    if (action === "delete") { deleteOrder(idx); displayTodaysSoldItems(); }
-  });
+  const btn = ev.target.closest("button");
+  if (!btn) return;
+
+  const idx = Number(btn.dataset.idx);
+  const action = btn.dataset.action;
+
+  if (action === "edit") openEdit(idx);
+  else if (action === "print") printOrder(idx);
+  else if (action === "pdf") downloadBillPDF(idx);
+  else if (action === "delete") {
+    deleteOrder(idx);
+    displayTodaysSoldItems();
+  }
+  // ✅ NEW: WhatsApp bill handler
+  else if (btn.classList.contains("bill-btn")) {
+    const order = orders[idx];
+    sendWhatsAppBill(order);
+  }
+});
+
 
   document.getElementById("addItemBtn")?.addEventListener("click", () => addItemRow());
 
@@ -669,22 +723,38 @@ function displayBestSaleItem() {
   `;
 }
 
-/* ========= STARTUP ========= */
-document.addEventListener("DOMContentLoaded", () => {
-  // default pageSize + sort
-  pageSize = Number(pageSizeEl?.value) || 10;
-  sortMode = sortSelect?.value || "newest";
+/* ========= WHATSAPP BILL ========= */
+function sendWhatsAppBill(order) {
+  if (!order) return alert("Order not found!");
 
-  // Seed sample data if empty (optional)
-  if (!orders || orders.length === 0) {
-    const seed = [
-      { id: generateOrderId(), date: new Date().toISOString(), items: [{name:"Egg Fried Rice", price:140, qty:2}], total:280, customerName:"", customerNumber:"" },
-      { id: generateOrderId(), date: new Date().toISOString(), items: [{name:"Chicken Fried Rice", price:160, qty:1},{name:"Soft Drinks", price:40, qty:1}], total:200, customerName:"", customerNumber:"" }
-    ];
-    // orders = seed;
-    // saveOrders();
+  let customerMobile = order.customerNumber || order.customerMobile || "";
+  if (!customerMobile) {
+    alert("No customer mobile number provided!");
+    return;
   }
 
+  // Clean number
+  customerMobile = customerMobile.replace(/\D/g, "");
+  if (!customerMobile.startsWith("91")) customerMobile = "91" + customerMobile;
+
+  let message = `*Street Magic Bill*\n`;
+  message += `Order #${order.id}\n`;
+  message += `Date: ${new Date(order.date).toLocaleString()}\n\n`;
+
+  (order.items || []).forEach(it => {
+    const variant = it.variant ? ` (${it.variant})` : "";
+    message += `• ${it.name}${variant} x${it.qty} - ₹${(it.price * it.qty).toFixed(2)}\n`;
+  });
+
+  message += `\n*Total: ₹${order.total.toFixed(2)}*\n\n`;
+  message += `Thank you for dining with Street Magic!`;
+
+  const whatsappUrl = `https://wa.me/${customerMobile}?text=${encodeURIComponent(message)}`;
+  window.open(whatsappUrl, "_blank");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  
   attachEvents();
   renderOrders();
   displayTodaysSoldItems();
@@ -714,3 +784,24 @@ function updateModalTotal() {
 
 
 
+function updateCustomerData(order) {
+  let existingCustomer = customers.find(c => c.number === order.number);
+
+  if (existingCustomer) {
+    existingCustomer.totalOrders += 1;
+    existingCustomer.totalAmount += parseFloat(order.total);
+    existingCustomer.rewardPoints = existingCustomer.totalOrders;
+    existingCustomer.freeMealEligible = existingCustomer.totalOrders >= 10;
+  } else {
+    customers.push({
+      name: order.name,
+      number: order.number,
+      totalOrders: 1,
+      totalAmount: parseFloat(order.total),
+      rewardPoints: 1,
+      freeMealEligible: false,
+    });
+  }
+
+  localStorage.setItem("customers", JSON.stringify(customers));
+}
