@@ -17,32 +17,39 @@ document.addEventListener("DOMContentLoaded", () => {
   const lastMonthYear = thisMonth === 0 ? thisYear - 1 : thisYear;
 
   // =====================
-  // Expenses
+  // Expenses (Safe Load)
   // =====================
-  let expenses = JSON.parse(localStorage.getItem("expenses")) || {
-    salaryPerDay: 500,
-    rentPerMonth: 3000,
-    powerPerMonth: 1200,
-    othersPerMonth: 1000
-  };
+  let expenses = JSON.parse(localStorage.getItem("expenses")) || {};
+  expenses.salaryPerDay = expenses.salaryPerDay ?? 0;
+  expenses.rentPerMonth = expenses.rentPerMonth ?? 0;
+  expenses.powerPerMonth = expenses.powerPerMonth ?? 0;
+  expenses.othersPerMonth = expenses.othersPerMonth ?? 0;
 
-  // Fill expense input fields
-  document.getElementById("salaryInput").value = expenses.salaryPerDay;
-  document.getElementById("rentInput").value = expenses.rentPerMonth;
-  document.getElementById("powerInput").value = expenses.powerPerMonth;
-  document.getElementById("salaryMonthlyInput").value = expenses.othersPerMonth;
+  // Fill input fields safely
+  const salaryInput = document.getElementById("salaryInput");
+  const rentInput = document.getElementById("rentInput");
+  const powerInput = document.getElementById("powerInput");
+  const othersInput = document.getElementById("salaryMonthlyInput");
 
-  document.getElementById("saveExpenses").addEventListener("click", () => {
-    expenses.salaryPerDay = parseInt(document.getElementById("salaryInput").value) || 0;
-    expenses.rentPerMonth = parseInt(document.getElementById("rentInput").value) || 0;
-    expenses.powerPerMonth = parseInt(document.getElementById("powerInput").value) || 0;
-    expenses.othersPerMonth = parseInt(document.getElementById("salaryMonthlyInput").value) || 0;
+  if (salaryInput) salaryInput.value = expenses.salaryPerDay;
+  if (rentInput) rentInput.value = expenses.rentPerMonth;
+  if (powerInput) powerInput.value = expenses.powerPerMonth;
+  if (othersInput) othersInput.value = expenses.othersPerMonth;
 
-    localStorage.setItem("expenses", JSON.stringify(expenses));
-    alert("Expenses updated!");
-    location.reload();
-  });
+  // Save button
+  const saveBtn = document.getElementById("saveExpenses");
+  if (saveBtn) {
+    saveBtn.addEventListener("click", () => {
+      expenses.salaryPerDay = parseInt(salaryInput.value) || 0;
+      expenses.rentPerMonth = parseInt(rentInput.value) || 0;
+      expenses.powerPerMonth = parseInt(powerInput.value) || 0;
+      expenses.othersPerMonth = parseInt(othersInput.value) || 0;
+      localStorage.setItem("expenses", JSON.stringify(expenses));
+      location.reload();
+    });
+  }
 
+  // Calculate daily expenses safely
   const dailySalary = expenses.salaryPerDay;
   const dailyRent = Math.round(expenses.rentPerMonth / 30);
   const dailyPower = Math.round(expenses.powerPerMonth / 30);
@@ -60,7 +67,6 @@ document.addEventListener("DOMContentLoaded", () => {
     orderList.forEach(order => {
       let orderDate = new Date(order.date);
       if (isNaN(orderDate)) return;
-
       const orderDateStr = orderDate.toISOString().split("T")[0];
 
       // Today's sales
@@ -121,7 +127,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // =====================
   // Update UI
   // =====================
-  const setText = (id, value) => document.getElementById(id).textContent = value;
+  const setText = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  };
 
   setText("todaySales", orderStats.todayTotal);
   setText("monthSales", orderStats.monthTotal);
@@ -140,8 +149,10 @@ document.addEventListener("DOMContentLoaded", () => {
   setText("otherExpense", dailyOther);
 
   const plEl = document.getElementById("todayProfitLoss");
-  plEl.textContent = "₹" + todayProfitLoss;
-  plEl.style.color = todayProfitLoss >= 0 ? "green" : "red";
+  if (plEl) {
+    plEl.textContent = "₹" + todayProfitLoss;
+    plEl.style.color = todayProfitLoss >= 0 ? "green" : "red";
+  }
 
   // =====================
   // Populate Categories
@@ -149,12 +160,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const categories = new Set();
   orders.forEach(o => o.items.forEach(i => i.category && categories.add(i.category)));
   const categoryFilter = document.getElementById("categoryFilter");
-  categories.forEach(cat => {
-    const opt = document.createElement("option");
-    opt.value = cat;
-    opt.textContent = cat;
-    categoryFilter.appendChild(opt);
-  });
+  if (categoryFilter) {
+    categories.forEach(cat => {
+      const opt = document.createElement("option");
+      opt.value = cat;
+      opt.textContent = cat;
+      categoryFilter.appendChild(opt);
+    });
+  }
 
   // =====================
   // Chart.js Setup
@@ -195,9 +208,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // Filter Function
   // =====================
   function applyFilters() {
-    const startDate = document.getElementById("startDate").value ? new Date(document.getElementById("startDate").value) : null;
-    const endDate = document.getElementById("endDate").value ? new Date(document.getElementById("endDate").value) : null;
-    const selectedCategory = categoryFilter.value;
+    const startDate = document.getElementById("startDate")?.value ? new Date(document.getElementById("startDate").value) : null;
+    const endDate = document.getElementById("endDate")?.value ? new Date(document.getElementById("endDate").value) : null;
+    const selectedCategory = categoryFilter?.value || "all";
 
     const filteredOrders = orders.filter(o => {
       const d = new Date(o.date);
@@ -269,11 +282,12 @@ document.addEventListener("DOMContentLoaded", () => {
     trendItemsChart.update();
   }
 
-  document.getElementById("applyFilters").addEventListener("click", applyFilters);
+  const applyBtn = document.getElementById("applyFilters");
+  if (applyBtn) applyBtn.addEventListener("click", applyFilters);
   applyFilters();
 
   // =====================
-  // Trend Toggle Buttons (7D / 6M)
+  // Trend Toggle Buttons
   // =====================
   function getLastNDaysSalesItems(n, type = "sales") {
     const labels = [], data = [];
@@ -321,15 +335,15 @@ document.addEventListener("DOMContentLoaded", () => {
     chart.data.labels = labels;
     chart.data.datasets[0].data = data;
     chart.update();
-    document.getElementById(btnActiveId).classList.add("active");
-    document.getElementById(btnInactiveId).classList.remove("active");
+    document.getElementById(btnActiveId)?.classList.add("active");
+    document.getElementById(btnInactiveId)?.classList.remove("active");
   }
 
-  document.getElementById("btn7d").addEventListener("click", () => toggleTrend(trendChart, "sales", 7, "btn7d", "btn6m"));
-  document.getElementById("btn6m").addEventListener("click", () => toggleTrend(trendChart, "sales", 30, "btn6m", "btn7d"));
+  document.getElementById("btn7d")?.addEventListener("click", () => toggleTrend(trendChart, "sales", 7, "btn7d", "btn6m"));
+  document.getElementById("btn6m")?.addEventListener("click", () => toggleTrend(trendChart, "sales", 30, "btn6m", "btn7d"));
 
-  document.getElementById("btn7dItems").addEventListener("click", () => toggleTrend(trendItemsChart, "items", 7, "btn7dItems", "btn6mItems"));
-  document.getElementById("btn6mItems").addEventListener("click", () => toggleTrend(trendItemsChart, "items", 30, "btn6mItems", "btn7dItems"));
+  document.getElementById("btn7dItems")?.addEventListener("click", () => toggleTrend(trendItemsChart, "items", 7, "btn7dItems", "btn6mItems"));
+  document.getElementById("btn6mItems")?.addEventListener("click", () => toggleTrend(trendItemsChart, "items", 30, "btn6mItems", "btn7dItems"));
 
   // Default load
   toggleTrend(trendChart, "sales", 7, "btn7d", "btn6m");
