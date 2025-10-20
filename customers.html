@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Street Magic - Customer Rewards</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/customers.css"/>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+  <!-- ===== Header / Navbar ===== -->
+  <header class="bg-black text-white p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center">
+    <div class="logo text-2xl font-bold text-center sm:text-left">Street Magic</div>
+    <nav class="mt-3 sm:mt-0">
+      <ul class="flex flex-wrap justify-center sm:justify-end space-x-4">
+        <li><a href="index.html" class="hover:underline font-semibold">Home</a></li>
+        <li><a href="menu.html" class="hover:underline">Menu</a></li>
+        <li><a href="orders.html" class="hover:underline">Orders</a></li>
+        <li><a href="customers.html" class="font-semibold underline">Customer Rewards</a></li>
+        <li><a href="purchase.html" class="hover:underline">Purchase</a></li>
+        <li><a href="report.html" class="hover:underline">Reports</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- ===== Main Content ===== -->
+  <main class="p-6 max-w-6xl mx-auto">
+    <h2 class="text-3xl font-bold mb-6 text-center">🎁 Customer Rewards</h2>
+
+    <!-- Add Customer Button -->
+    <div class="flex justify-end mb-4">
+      <button id="addCustomerBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow">
+        ➕ Add Customer
+      </button>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="flex justify-between mb-4 items-center">
+      <input 
+        type="text" 
+        id="searchInput" 
+        placeholder="🔍 Search by name or mobile number..." 
+        lass="w-full sm:w-1/2 border rounded-lg p-2 focus:ring-2 focus:ring-blue-400 outline-none"
+      >
+    </div>
+  
+
+    <!-- Customer Table -->
+    <div class="overflow-x-auto bg-white rounded-xl shadow p-4">
+      <table class="w-full text-left table-auto border-collapse" id="customersTable">
+        <thead>
+          <tr class="bg-gray-200">
+            <th class="p-2 border">#</th>
+            <th class="p-2 border">Name</th>
+            <th class="p-2 border">Mobile No</th>
+            <th class="p-2 border">Total Orders</th>
+            <th class="p-2 border">Reward Points</th>
+            <th class="p-2 border">Amount Spent</th>
+            <th class="p-2 border">Redeem</th>
+            <th class="p-2 border">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="customersList">
+          <!-- JS injects customers -->
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- ===== Add/Edit Customer Modal ===== -->
+  <div id="customerModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-lg p-6 w-[90%] max-w-md relative max-h-[90vh] overflow-y-auto">
+      <h3 class="text-2xl font-bold mb-4 text-center sticky top-0 bg-white pb-2" id="modalTitle">Add Customer</h3>
+      
+      <div class="space-y-4 mb-4">
+        <div>
+          <label class="block text-sm font-semibold mb-1">Name</label>
+          <input type="text" id="customerName" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold mb-1">Mobile No</label>
+          <input type="text" id="customerPhone" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold mb-1">Total Orders</label>
+          <input type="number" id="customerOrders" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 outline-none">
+        </div>
+        <div>
+           <label class="block text-sm font-semibold mb-1">Amount Spent</label>
+           <input type="number" id="customerAmount" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 outline-none">
+        </div>
+
+      </div>
+
+      <div class="flex justify-end gap-2 mt-4 sticky bottom-0 bg-white py-3">
+        <button id="saveCustomerBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">💾 Save</button>
+        <button id="closeCustomerModal" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">✖ Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Footer ===== -->
+  <footer class="bg-black text-white text-center p-4 mt-6">
+    <p>&copy; 2025 Street Magic Restaurant</p>
+  </footer>
+
+  <!-- JS -->
+  <script src="js/customers.js"></script>
+<!-- Auto-added missing elements for JS compatibility -->
+<!-- added for selectors in: menu.js -->
+<div id="customerReward" data-auto-added="true"></div>
+<!-- added for selectors in: menu.js -->
+<div id="customerList" data-auto-added="true"></div>
+</body>
+</html>
