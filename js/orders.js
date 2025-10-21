@@ -723,7 +723,7 @@ function displayBestSaleItem() {
   `;
 }
 
-/* ========= WHATSAPP BILL (with Reward Points & Total Orders) ========= */
+/* ========= WHATSAPP BILL (with Reward Points, Total Orders & offer line) ========= */
 function sendWhatsAppBill(order) {
   if (!order) return alert("Order not found!");
 
@@ -769,14 +769,17 @@ function sendWhatsAppBill(order) {
     message += `• ${it.name}${variant} x${it.qty} - ₹${(it.price * it.qty).toFixed(2)}\n`;
   });
 
-  message += `\n*Total: ₹${order.total.toFixed(2)}*\n`;
-  message += `*Total Orders:* ${totalOrders}\n`;
-  message += `*Reward Points:* ${rewardPoints}\n\n`;
-  message += `Thank you for dining with Street Magic!`;
+    message += `\n*Total: ₹${order.total.toFixed(2)}*\n`;
+    message += `*Total Orders:* ${totalOrders}\n`;
+    message += `*Reward Points:* ${rewardPoints}\n\n`; // ← added extra \n here
+    message += `_Complete 10 orders and you’ll get 1 reward point = 1 free meal_\n\n`;
+    message += `Thank you for dining with Street Magic!`;
+
 
   const whatsappUrl = `https://wa.me/${customerMobile}?text=${encodeURIComponent(message)}`;
   window.open(whatsappUrl, "_blank");
 }
+
 
 /* ========= UPDATE MODAL TOTAL ========= */
 function updateModalTotal() {
