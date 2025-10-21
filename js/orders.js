@@ -733,16 +733,21 @@ function sendWhatsAppBill(order) {
     return;
   }
 
-  // ✅ Clean number (digits only, add country code)
+  // Clean number and ensure country code
   customerMobile = customerMobile.replace(/\D/g, "");
   if (!customerMobile.startsWith("91")) customerMobile = "91" + customerMobile;
 
-  // ✅ Load customers & normalize phone numbers
+  // Load customers
   const customers = JSON.parse(localStorage.getItem("customers")) || [];
-  const normalized = phone => phone.replace(/\D/g, "");
-  const customerData = customers.find(c => normalized(c.phone || "") === normalized(order.customerNumber || order.customerMobile || ""));
+  const normalize = phone => (phone || "").replace(/\D/g, "");
 
-  // ✅ Default values
+  // Try to find a matching record (by either customerNumber or customerMobile)
+  const customerData = customers.find(c =>
+    normalize(c.phone) === normalize(order.customerNumber) ||
+    normalize(c.phone) === normalize(order.customerMobile)
+  );
+
+  // Default values
   let totalOrders = 0;
   let rewardPoints = 0;
   let redeemed = 0;
@@ -754,7 +759,7 @@ function sendWhatsAppBill(order) {
     rewardPoints = Math.max(0, totalEarned - redeemed);
   }
 
-  // ✅ Build WhatsApp message
+  // WhatsApp message
   let message = `*Street Magic Bill*\n`;
   message += `Order #${order.id}\n`;
   message += `Date: ${new Date(order.date).toLocaleString()}\n\n`;
@@ -772,7 +777,6 @@ function sendWhatsAppBill(order) {
   const whatsappUrl = `https://wa.me/${customerMobile}?text=${encodeURIComponent(message)}`;
   window.open(whatsappUrl, "_blank");
 }
-
 
 /* ========= UPDATE MODAL TOTAL ========= */
 function updateModalTotal() {
