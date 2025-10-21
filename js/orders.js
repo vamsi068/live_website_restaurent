@@ -219,7 +219,6 @@ function renderCustomers() {
   customersListEl.innerHTML = tableHTML;
 }
 
-
 /* ========= PAGINATION ========= */
 function renderPagination(totalPages) {
   paginationEl.innerHTML = "";
@@ -273,7 +272,6 @@ function openEdit(index) {
   try { editModal.showModal(); } catch (e) { editModal.setAttribute('open',''); }
 }
 
-
 function addItemRow(name = "", price = "", qty = "", variant = "") {
   const row = document.createElement("div");
   row.className = "item-row";
@@ -289,7 +287,6 @@ function addItemRow(name = "", price = "", qty = "", variant = "") {
   itemsContainer.appendChild(row);
   updateModalTotal();
 }
-
 
 /* handle edit form submit */
 editForm?.addEventListener("submit", e => {
@@ -320,8 +317,6 @@ editForm?.addEventListener("submit", e => {
   try { editModal.close(); } catch(e){ editModal.removeAttribute('open'); }
   renderOrders();
 });
-
-
 
 /* ========= PRINT / EXPORT ========= */
 function printOrder(index) {
@@ -376,7 +371,6 @@ function printOrder(index) {
   `);
   w.document.close();
 }
-
 
 printAllBtn?.addEventListener("click", () => {
   const w = window.open("", "_blank");
@@ -517,8 +511,6 @@ if (soldHeader) {
   if (span) span.textContent = `Sold Items (${labelDate})`;
 }
 
-
-
   if (Object.keys(soldItems).length === 0) {
     soldListContainer.innerHTML = `<p>No items sold on ${labelDate}.</p>`;
     return;
@@ -559,7 +551,6 @@ function attachEvents() {
   }
 });
 
-
   document.getElementById("addItemBtn")?.addEventListener("click", () => addItemRow());
 
   // ✅ Clear Filter button now resets filters only
@@ -574,7 +565,6 @@ function attachEvents() {
   renderOrders();
   displayBestSaleItem(); // ✅ add this
 });
-
 
   // ✅ NEW Delete All button (must exist in HTML)
   const deleteAllBtn = document.getElementById("deleteAllBtn");
@@ -635,7 +625,6 @@ function attachEvents() {
   setInterval(displayTodaysSoldItems, 5000);
 }
 
-
 /* Download single order as formatted PDF */
 function downloadBillPDF(index) {
   const o = orders[index];
@@ -678,7 +667,6 @@ function downloadBillPDF(index) {
   doc.text(`Grand Total: Rs. ${formatCurrency(o.total || 0)}`, 14, y);
   doc.save(`${o.id}_Bill.pdf`);
 }
-
 
 /* ========= BEST SALE ITEM (RESPECTS FILTER DATE) ========= */
 function displayBestSaleItem() {
@@ -723,7 +711,7 @@ function displayBestSaleItem() {
   `;
 }
 
-/* ========= WHATSAPP BILL ========= */
+/* ========= WHATSAPP BILL (with Reward Points & Total Orders) ========= */
 function sendWhatsAppBill(order) {
   if (!order) return alert("Order not found!");
 
@@ -733,10 +721,28 @@ function sendWhatsAppBill(order) {
     return;
   }
 
-  // Clean number
+  // Clean number for WhatsApp
   customerMobile = customerMobile.replace(/\D/g, "");
   if (!customerMobile.startsWith("91")) customerMobile = "91" + customerMobile;
 
+  // 🔹 Get customers from localStorage
+  const customers = JSON.parse(localStorage.getItem("customers")) || [];
+  const customerData = customers.find(
+    c => c.phone === (order.customerNumber || order.customerMobile)
+  );
+
+  // 🔹 Default values
+  let rewardPoints = 0;
+  let totalOrders = 0;
+
+  if (customerData) {
+    totalOrders = customerData.totalOrders || 0;
+    const redeemed = customerData.redeemed || 0;
+    // Reward = 1 per 10 orders, minus redeemed
+    rewardPoints = Math.max(0, Math.floor(totalOrders / 10) - redeemed);
+  }
+
+  // 🔹 Build WhatsApp message
   let message = `*Street Magic Bill*\n`;
   message += `Order #${order.id}\n`;
   message += `Date: ${new Date(order.date).toLocaleString()}\n\n`;
@@ -746,21 +752,14 @@ function sendWhatsAppBill(order) {
     message += `• ${it.name}${variant} x${it.qty} - ₹${(it.price * it.qty).toFixed(2)}\n`;
   });
 
-  message += `\n*Total: ₹${order.total.toFixed(2)}*\n\n`;
+  message += `\n*Total: ₹${order.total.toFixed(2)}*\n`;
+  message += `*Reward Points:* ${rewardPoints}\n`;
+  message += `*Total Orders:* ${totalOrders}\n\n`;
   message += `Thank you for dining with Street Magic!`;
 
   const whatsappUrl = `https://wa.me/${customerMobile}?text=${encodeURIComponent(message)}`;
   window.open(whatsappUrl, "_blank");
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-  
-  attachEvents();
-  renderOrders();
-  displayTodaysSoldItems();
-  displayBestSaleItem();
-});
-
 
 /* ========= UPDATE MODAL TOTAL ========= */
 function updateModalTotal() {
@@ -781,8 +780,6 @@ function updateModalTotal() {
     modalTotal.textContent = `₹${formatCurrency(total)}`;
   }
 }
-
-
 
 function updateCustomerData(order) {
   let existingCustomer = customers.find(c => c.number === order.number);
@@ -805,3 +802,13 @@ function updateCustomerData(order) {
 
   localStorage.setItem("customers", JSON.stringify(customers));
 }
+
+/* ========= INITIALIZE ON PAGE LOAD ========= */
+document.addEventListener("DOMContentLoaded", () => {
+  ensureOrderIds();     // make sure all have valid IDs
+  renderOrders();       // display saved orders
+  attachEvents();       // attach all click/search/filter events
+  displayBestSaleItem();// show today's best sale
+  displayTodaysSoldItems(); // show today's sold items
+});
+
