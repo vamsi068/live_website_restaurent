@@ -420,8 +420,8 @@ function deletePurchase(index) {
   if (!confirm("Delete this purchase?")) return;
   const record = purchases[index];
   if (record && inventory[record.item] !== undefined) {
-    inventory[record.item] -= record.qty;
-    if (inventory[record.item] < 0) inventory[record.item] = 0;
+    inventory[record.item].qty -= record.qty; // ✅ fix qty update bug too
+    if (inventory[record.item].qty < 0) inventory[record.item].qty = 0;
   }
   purchases.splice(index, 1);
   saveData();
@@ -440,6 +440,10 @@ function editPurchase(index) {
   document.getElementById("savePurchaseBtn").textContent = "Update Purchase";
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
+
+// 🧩 Expose functions globally so inline onclick works:
+window.editPurchase = editPurchase;
+window.deletePurchase = deletePurchase;
 
 // ===== Clear Form =====
 function clearForm() {
