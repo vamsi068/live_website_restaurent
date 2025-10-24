@@ -6,7 +6,10 @@
   <title>Street Magic - Customer Rewards</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="css/customers.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body class="bg-gray-100 text-gray-800">
 
   <!-- ===== Header / Navbar ===== -->
@@ -26,137 +29,155 @@
 
   <!-- ===== Main Content ===== -->
   <main class="p-6 max-w-6xl mx-auto">
+
     <h2 class="text-3xl font-bold mb-6 text-center">🎁 Customer Rewards</h2>
 
-    <!-- Add Customer Button -->
-    <div class="flex justify-end mb-4">
+    <!-- ===== Action Buttons ===== -->
+    <div class="flex justify-end mb-4 gap-2 flex-wrap">
       <button id="addCustomerBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow">
         ➕ Add Customer
       </button>
+      <button id="exportCSVBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg shadow">
+        📄 Export CSV
+      </button>
+      <button id="exportPDFBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg shadow">
+        📄 Export PDF
+      </button>
+      <button id="backupJSONBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow">
+        💾 Backup JSON
+      </button>
+      <input type="file" id="restoreJSONInput" accept=".json" class="border p-2 rounded"/>
     </div>
 
-    <!-- Search Bar -->
-    <div class="flex justify-between mb-4 items-center">
+    <!-- ===== Search & Filter Section ===== -->
+    <div class="flex flex-col sm:flex-row justify-between mb-4 gap-4 items-center">
       <input 
         type="text" 
         id="searchInput" 
         placeholder="🔍 Search by name or mobile number..." 
-        lass="w-full sm:w-1/2 border rounded-lg p-2 focus:ring-2 focus:ring-blue-400 outline-none"
+        class="w-full sm:w-1/2 border rounded-lg p-2 focus:ring-2 focus:ring-blue-400 outline-none"
       >
+      <select 
+        id="filterType" 
+        class="w-full sm:w-1/4 border rounded-lg p-2 focus:ring-2 focus:ring-blue-400 outline-none"
+      >
+        <option value="all">All Customers</option>
+        <option value="new">New Customers</option>
+        <option value="repeat">Repeat Customers</option>
+        <option value="wrong">Wrong Numbers</option>
+      </select>
     </div>
 
     <!-- ===== CUSTOMER STATS SECTION ===== -->
-     <section id="customerStats" class="customer-stats">
-      
-      <div class="stats-card new">
+    <section id="customerStats" class="customer-stats mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="stats-card new bg-blue-100 text-blue-700 p-3 rounded-lg shadow text-center font-semibold">
         🆕 New Customers Today: <span id="newCustomersCount">0</span>
       </div>
-
-      <div class="stats-card repeat">
+      <div class="stats-card repeat bg-green-100 text-green-700 p-3 rounded-lg shadow text-center font-semibold">
         🔁 Repeat Customers: <span id="repeatCustomersCount">0</span>
       </div>
-
-      <div class="stats-card total">
-       👥 Total Customers: <span id="totalCustomersCount">0</span>
+      <div class="stats-card total bg-gray-100 text-gray-700 p-3 rounded-lg shadow text-center font-semibold">
+        👥 Total Customers: <span id="totalCustomersCount">0</span>
       </div>
-
-      <div class="stats-card wrong">
-       ⚠️ Wrong Numbers: <span id="wrongNumbersCount">0</span>
+      <div class="stats-card wrong bg-red-100 text-red-700 p-3 rounded-lg shadow text-center font-semibold">
+        ⚠️ Wrong Numbers: <span id="wrongNumbersCount">0</span>
       </div>
-
     </section>
-  
-    <!-- Customer Table -->
-    <div class="overflow-x-auto bg-white rounded-xl shadow p-4">
+
+    <!-- ===== CUSTOMER TABLE ===== -->
+    <div class="overflow-x-auto bg-white rounded-xl shadow p-4 mb-8">
       <table class="w-full text-left table-auto border-collapse" id="customersTable">
         <thead>
-          <tr class="bg-gray-200">
-            <th class="p-2 border">#</th>
-            <th class="p-2 border">Name</th>
-            <th class="p-2 border">Mobile No</th>
-            <th class="p-2 border">Total Orders</th>
+          <tr class="bg-gray-200 cursor-pointer">
+            <th class="p-2 border" data-sort="index">#</th>
+            <th class="p-2 border" data-sort="name">Name</th>
+            <th class="p-2 border" data-sort="phone">Mobile No</th>
+            <th class="p-2 border" data-sort="orders">Total Orders</th>
             <th class="p-2 border">Reward Points</th>
-            <th class="p-2 border">Amount Spent</th>
+            <th class="p-2 border" data-sort="amount">Amount Spent</th>
             <th class="p-2 border">Redeem</th>
             <th class="p-2 border">Actions</th>
           </tr>
         </thead>
         <tbody id="customersList">
-          <!-- JS injects customers -->
+          <!-- Populated by JS -->
         </tbody>
       </table>
     </div>
-
-
-    
-
 
     <!-- ===== Add/Edit Customer Modal ===== -->
     <div id="customerModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
       <div class="bg-white rounded-xl shadow-lg p-6 w-[90%] max-w-md relative max-h-[90vh] overflow-y-auto">
         <h3 class="text-2xl font-bold mb-4 text-center sticky top-0 bg-white pb-2" id="modalTitle">Add Customer</h3>
+
         <div class="space-y-4 mb-4">
-        <div>
-          <label class="block text-sm font-semibold mb-1">Name</label>
-          <input type="text" id="customerName" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 outline-none">
-        </div>
-        <div>
-          <label class="block text-sm font-semibold mb-1">Mobile No</label>
-          <input type="text" id="customerPhone" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 outline-none">
-        </div>
-        <div>
-          <label class="block text-sm font-semibold mb-1">Total Orders</label>
-          <input type="number" id="customerOrders" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 outline-none">
-        </div>
-        <div>
-           <label class="block text-sm font-semibold mb-1">Amount Spent</label>
-           <input type="number" id="customerAmount" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 outline-none">
+          <div>
+            <label class="block text-sm font-semibold mb-1">Name</label>
+            <input type="text" id="customerName" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 outline-none">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold mb-1">Mobile No</label>
+            <input type="text" id="customerPhone" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 outline-none">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold mb-1">Total Orders</label>
+            <input type="number" id="customerOrders" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 outline-none">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold mb-1">Amount Spent</label>
+            <input type="number" id="customerAmount" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 outline-none">
+          </div>
         </div>
 
-      </div>
-
-      <div class="flex justify-end gap-2 mt-4 sticky bottom-0 bg-white py-3">
-        <button id="saveCustomerBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">💾 Save</button>
-        <button id="closeCustomerModal" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">✖ Close</button>
+        <div class="flex justify-end gap-2 mt-4 sticky bottom-0 bg-white py-3">
+          <button id="saveCustomerBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">💾 Save</button>
+          <button id="closeCustomerModal" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">✖ Close</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- ===== Wrong Numbers Section ===== -->
-<section class="mb-8">
-  <h3 class="text-xl font-semibold text-red-700 mb-2">⚠️ Customers with Wrong Numbers</h3>
-  <div class="overflow-x-auto bg-red-50 border border-red-300 rounded-xl shadow p-4">
-    <table class="w-full text-left table-auto border-collapse" id="wrongNumbersTable">
-      <thead>
-        <tr class="bg-red-200">
-          <th class="p-2 border">#</th>
-          <th class="p-2 border">Name</th>
-          <th class="p-2 border">Mobile No</th>
-          <th class="p-2 border">Total Orders</th>
-          <th class="p-2 border">Amount Spent</th>
-        </tr>
-      </thead>
-      <tbody id="wrongNumbersList">
-        <tr>
-          <td colspan="5" class="text-center text-red-600 py-2">No wrong numbers found</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</section>
+    <!-- ===== WRONG NUMBERS SECTION =====
+    <section class="mb-8">
+      <h3 class="text-xl font-semibold text-red-700 mb-2">⚠️ Customers with Wrong Numbers</h3>
+      <div class="overflow-x-auto bg-red-50 border border-red-300 rounded-xl shadow p-4">
+        <table class="w-full text-left table-auto border-collapse" id="wrongNumbersTable">
+          <thead>
+            <tr class="bg-red-200">
+              <th class="p-2 border">#</th>
+              <th class="p-2 border">Name</th>
+              <th class="p-2 border">Mobile No</th>
+              <th class="p-2 border">Total Orders</th>
+              <th class="p-2 border">Amount Spent</th>
+            </tr>
+          </thead>
+          <tbody id="wrongNumbersList">
+            <tr>
+              <td colspan="5" class="text-center text-red-600 py-2">No wrong numbers found</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section> -->
 
+    <!-- ===== Customer Analytics Chart ===== -->
+    <section class="mb-8">
+      <h3 class="text-xl font-semibold mb-2">📊 Customer Analytics</h3>
+      <canvas id="customersChart" class="bg-white p-4 rounded-xl shadow"></canvas>
+    </section>
 
   </main>
 
-
-  
+  <!-- ===== Toast Notifications ===== -->
+  <div id="toastContainer" class="fixed bottom-6 right-6 flex flex-col gap-2 z-50"></div>
 
   <!-- ===== Footer ===== -->
   <footer class="bg-black text-white text-center p-4 mt-6">
     <p>&copy; 2025 Street Magic Restaurant</p>
   </footer>
 
-  <!-- JS -->
+  <!-- ===== JS Scripts ===== -->
   <script src="js/customers.js"></script>
+  <script src="js/customers-enhanced.js"></script>
+
 </body>
 </html>
