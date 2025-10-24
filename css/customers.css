@@ -301,7 +301,14 @@ footer:hover {
   margin-bottom: 30px; /* Adjust the value as needed */
 }
 
-/* Optional: ensure table has some top margin if needed */
-#customerTable {
-  margin-top: 30px; /* Adjust if needed */
+.customer-stats .stats-card.wrong {
+  background: #fee2e2; /* light red */
+  color: #b91c1c; /* dark red text */
 }
+
+/* Space between Wrong Numbers section and main customer table */
+#wrapper {
+  margin-bottom: 30px;
+}
+
+
