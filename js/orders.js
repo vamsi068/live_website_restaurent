@@ -498,9 +498,11 @@ function displayTodaysSoldItems() {
   const soldItems = {};
   filteredOrders.forEach(order => {
     order.items.forEach(item => {
-      const name = (item.name || "Unnamed Item").trim();
+      const base = (item.name || "Unnamed Item").trim();
+      const variant = (item.variant || "").trim();
+      const fullName = variant ? `${base} (${variant})` : base; // ✅ include variant
       const qty = Number(item.qty) || 1;
-      soldItems[name] = (soldItems[name] || 0) + qty;
+      soldItems[fullName] = (soldItems[fullName] || 0) + qty;
     });
   });
 
@@ -693,10 +695,13 @@ function displayBestSaleItem() {
   const soldItems = {};
   filteredOrders.forEach(order => {
     order.items.forEach(item => {
-      const name = (item.name || "Unnamed Item").trim();
+      const base = (item.name || "Unnamed Item").trim();
+      const variant = (item.variant || "").trim();
+      const fullName = variant ? `${base} (${variant})` : base; // ✅ include variant
       const qty = Number(item.qty) || 1;
-      soldItems[name] = (soldItems[name] || 0) + qty;
+      soldItems[fullName] = (soldItems[fullName] || 0) + qty;
     });
+
   });
 
   const container = document.getElementById("bestSaleContainer");
