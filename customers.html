@@ -47,15 +47,23 @@
 
     <!-- ===== CUSTOMER STATS SECTION ===== -->
      <section id="customerStats" class="customer-stats">
+      
       <div class="stats-card new">
         🆕 New Customers Today: <span id="newCustomersCount">0</span>
       </div>
+
       <div class="stats-card repeat">
         🔁 Repeat Customers: <span id="repeatCustomersCount">0</span>
       </div>
+
       <div class="stats-card total">
        👥 Total Customers: <span id="totalCustomersCount">0</span>
       </div>
+
+      <div class="stats-card wrong">
+       ⚠️ Wrong Numbers: <span id="wrongNumbersCount">0</span>
+      </div>
+
     </section>
   
     <!-- Customer Table -->
@@ -114,8 +122,30 @@
     </div>
   </div>
 
+  <!-- ===== Wrong Numbers Section ===== -->
+<section class="mb-8">
+  <h3 class="text-xl font-semibold text-red-700 mb-2">⚠️ Customers with Wrong Numbers</h3>
+  <div class="overflow-x-auto bg-red-50 border border-red-300 rounded-xl shadow p-4">
+    <table class="w-full text-left table-auto border-collapse" id="wrongNumbersTable">
+      <thead>
+        <tr class="bg-red-200">
+          <th class="p-2 border">#</th>
+          <th class="p-2 border">Name</th>
+          <th class="p-2 border">Mobile No</th>
+          <th class="p-2 border">Total Orders</th>
+          <th class="p-2 border">Amount Spent</th>
+        </tr>
+      </thead>
+      <tbody id="wrongNumbersList">
+        <tr>
+          <td colspan="5" class="text-center text-red-600 py-2">No wrong numbers found</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
 
-    
+
   </main>
 
 
