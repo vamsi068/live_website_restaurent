@@ -18,18 +18,39 @@ document.addEventListener('DOMContentLoaded', function () {
   const inputOrders = document.getElementById("customerOrders");
   const inputAmount = document.getElementById("customerAmount");
 
+  // 🔹 Stats section elements
+  const newCustEl = document.getElementById("newCustomersCount");
+  const repeatCustEl = document.getElementById("repeatCustomersCount");
+  const totalCustEl = document.getElementById("totalCustomersCount");
+
   // ========= HELPER FUNCTIONS =========
 
-  // Calculate rewards: 1 reward per 10 orders, starting from 10 orders
-function calculateRewards(customer) {
-  if (!customer.totalOrders || customer.totalOrders < 10) return 0;
-  const totalEarned = Math.floor(customer.totalOrders / 10); // total rewards earned
-  const redeemed = customer.redeemed || 0;
-  return Math.max(0, totalEarned - redeemed); // remaining rewards
-}
+  // Calculate rewards
+  function calculateRewards(customer) {
+    if (!customer.totalOrders || customer.totalOrders < 10) return 0;
+    const totalEarned = Math.floor(customer.totalOrders / 10);
+    const redeemed = customer.redeemed || 0;
+    return Math.max(0, totalEarned - redeemed);
+  }
 
+  // Update customer details inside saved orders
+  function updateOrdersWithCustomerChange(oldPhone, newPhone, newName) {
+    let orders = JSON.parse(localStorage.getItem("orders")) || [];
+    let changed = false;
 
-  // Sync customers from orders data
+    orders = orders.map(order => {
+      if (order.customerMobile === oldPhone) {
+        order.customerMobile = newPhone;
+        order.customerName = newName;
+        changed = true;
+      }
+      return order;
+    });
+
+    if (changed) localStorage.setItem("orders", JSON.stringify(orders));
+  }
+
+  // Sync customers from orders
   function syncFromOrders() {
     const orders = JSON.parse(localStorage.getItem("orders")) || [];
     const aggregated = {};
@@ -69,63 +90,70 @@ function calculateRewards(customer) {
     saveCustomers();
   }
 
-  // Save customers to localStorage
+  // Save customers
   function saveCustomers() {
     localStorage.setItem("customers", JSON.stringify(customers));
   }
 
-  // ========= RENDER FUNCTION =========
+  // ========= RENDER FUNCTION (uses phone as unique ID) =========
   function renderCustomers(filtered = customers) {
-  if (!customersList) return;
+    if (!customersList) return;
 
-  // 🔹 Sort by Total Orders (descending)
-  filtered = [...filtered].sort((a, b) => (b.totalOrders || 0) - (a.totalOrders || 0));
+    filtered = [...filtered].sort((a, b) => (b.totalOrders || 0) - (a.totalOrders || 0));
 
-  customersList.innerHTML = filtered.map((c, i) => {
-    const totalRewards = calculateRewards(c);
-    const redeemed = c.redeemed || 0;
-    const remainingRewards = Math.max(0, totalRewards - redeemed);
+    customersList.innerHTML = filtered.map((c, i) => {
+      const totalRewards = calculateRewards(c);
+      const redeemed = c.redeemed || 0;
+      const remainingRewards = Math.max(0, totalRewards - redeemed);
+      const rewardText = remainingRewards > 0
+        ? `🎉 ${remainingRewards} Free Meal${remainingRewards > 1 ? 's' : ''} Available`
+        : "No Rewards";
 
-    const rewardText = remainingRewards > 0
-      ? `🎉 ${remainingRewards} Free Meal${remainingRewards > 1 ? 's' : ''} Available`
-      : "No Rewards";
+      return `
+        <tr data-phone="${c.phone}">
+          <td class="p-2">${i + 1}</td>
+          <td class="p-2">${c.name}</td>
+          <td class="p-2">${c.phone}</td>
+          <td class="p-2">${c.totalOrders}</td>
+          <td class="p-2">${rewardText}</td>
+          <td class="p-2">${c.amount ? c.amount.toFixed(2) : "0.00"}</td>
+          <td class="p-2">
+            <button data-phone="${c.phone}" class="redeem-btn bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600">
+              ${remainingRewards > 0 ? "Redeem 1" : "No Rewards"}
+            </button>
+          </td>
+          <td class="p-2 actions flex gap-2">
+            <button data-phone="${c.phone}" class="edit-btn bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600">Edit</button>
+            <button data-phone="${c.phone}" class="delete-btn bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Delete</button>
+            <button data-phone="${c.phone}" class="pdf-btn bg-indigo-500 text-white px-2 py-1 rounded hover:bg-indigo-600">📄 WhatsApp</button>
+          </td>
+        </tr>
+      `;
+    }).join("");
 
-    return `
-      <tr>
-        <td class="p-2">${i + 1}</td>
-        <td class="p-2">${c.name}</td>
-        <td class="p-2">${c.phone}</td>
-        <td class="p-2">${c.totalOrders}</td>
-        <td class="p-2">${rewardText}</td>
-        <td class="p-2">${c.amount ? c.amount.toFixed(2) : "0.00"}</td>
-        <td class="p-2">
-          <button data-index="${i}" class="redeem-btn bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600">
-            ${remainingRewards > 0 ? "Redeem 1" : "No Rewards"}
-          </button>
-        </td>
-        <td class="p-2 actions flex gap-2">
-          <button data-index="${i}" class="edit-btn bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600">Edit</button>
-          <button data-index="${i}" class="delete-btn bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Delete</button>
-          <button data-index="${i}" class="pdf-btn bg-indigo-500 text-white px-2 py-1 rounded hover:bg-indigo-600">📄 WhatsApp</button>
-        </td>
-      </tr>
-    `;
-  }).join("");
+    attachEventHandlers();
+    renderStats();
+  }
 
-    // ===== DELETE CUSTOMER =====
+  // ========= ATTACH HANDLERS (uses phone instead of index) =========
+  function attachEventHandlers() {
+    // Delete
     document.querySelectorAll(".delete-btn").forEach(btn => {
       btn.addEventListener("click", () => {
-        const index = parseInt(btn.getAttribute("data-index"));
-        customers.splice(index, 1);
+        const phone = btn.dataset.phone;
+        customers = customers.filter(c => c.phone !== phone);
         saveCustomers();
         renderCustomers();
       });
     });
 
-    // ===== EDIT CUSTOMER =====
+    // Edit
     document.querySelectorAll(".edit-btn").forEach(btn => {
       btn.addEventListener("click", () => {
-        editIndex = parseInt(btn.getAttribute("data-index"));
+        const phone = btn.dataset.phone;
+        editIndex = customers.findIndex(c => c.phone === phone);
+        if (editIndex === -1) return;
+
         const c = customers[editIndex];
         modalTitle.textContent = "Edit Customer";
         inputName.value = c.name;
@@ -136,31 +164,34 @@ function calculateRewards(customer) {
       });
     });
 
-    // ===== REDEEM (one reward per click) =====
+    // Redeem
     document.querySelectorAll(".redeem-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const index = parseInt(btn.getAttribute("data-index"));
-    const c = customers[index];
-    const remainingRewards = calculateRewards(c);
+      btn.addEventListener("click", () => {
+        const phone = btn.dataset.phone;
+        const index = customers.findIndex(c => c.phone === phone);
+        if (index === -1) return;
 
-    if (remainingRewards > 0) {
-      if (confirm("Redeem 1 reward point for this customer?")) {
-        c.redeemed = (c.redeemed || 0) + 1; // use 1 reward
-        saveCustomers();
-        renderCustomers();
-      }
-    } else {
-      alert("No rewards available to redeem!");
-    }
-  });
-});
+        const c = customers[index];
+        const remainingRewards = calculateRewards(c);
+        if (remainingRewards > 0) {
+          if (confirm("Redeem 1 reward point for this customer?")) {
+            c.redeemed = (c.redeemed || 0) + 1;
+            saveCustomers();
+            renderCustomers();
+          }
+        } else {
+          alert("No rewards available to redeem!");
+        }
+      });
+    });
 
-
-    // ===== WHATSAPP SHARE =====
+    // WhatsApp
     document.querySelectorAll(".pdf-btn").forEach(btn => {
       btn.addEventListener("click", () => {
-        const index = parseInt(btn.getAttribute("data-index"));
-        const c = customers[index];
+        const phone = btn.dataset.phone;
+        const c = customers.find(c => c.phone === phone);
+        if (!c) return;
+
         const totalRewards = calculateRewards(c);
         const redeemed = c.redeemed || 0;
         const remainingRewards = Math.max(0, totalRewards - redeemed);
@@ -177,13 +208,25 @@ Here’s your *Street Magic Rewards Summary*:
 
 After ${nextOrders} more order${nextOrders > 1 ? 's' : ''}, you'll earn *1 Reward Point = 1 Free Meal* 🍔
 
-Thank you for being a valued customer! 
-        `;
+Thank you for being a valued customer!`;
 
         const whatsappURL = `https://wa.me/${c.phone}?text=${encodeURIComponent(message)}`;
         window.open(whatsappURL, "_blank");
       });
     });
+  }
+
+  // ========= STATS SECTION =========
+  function renderStats() {
+    if (!newCustEl || !repeatCustEl || !totalCustEl) return;
+
+    const total = customers.length;
+    const newCustomers = customers.filter(c => c.totalOrders === 1).length;
+    const repeatCustomers = total - newCustomers;
+
+    newCustEl.textContent = newCustomers;
+    repeatCustEl.textContent = repeatCustomers;
+    totalCustEl.textContent = total;
   }
 
   // ========= MODAL CONTROLS =========
@@ -198,65 +241,51 @@ Thank you for being a valued customer!
     inputName.value = "";
     inputPhone.value = "";
     inputOrders.value = "";
-    if (inputAmount) inputAmount.value = "";
+    inputAmount.value = "";
   }
 
   // ========= EVENT LISTENERS =========
-  if (addCustomerBtn) {
-    addCustomerBtn.addEventListener("click", () => {
-      modalTitle.textContent = "Add Customer";
-      openModal();
-    });
-  }
+  addCustomerBtn?.addEventListener("click", () => {
+    modalTitle.textContent = "Add Customer";
+    openModal();
+  });
 
-  if (closeCustomerModal) {
-    closeCustomerModal.addEventListener("click", closeModal);
-  }
+  closeCustomerModal?.addEventListener("click", closeModal);
 
-  if (saveCustomerBtn) {
-    saveCustomerBtn.addEventListener("click", () => {
-      const name = inputName.value.trim();
-      const phone = inputPhone.value.trim();
-      const orders = parseInt(inputOrders.value) || 0;
-      const amount = parseFloat(inputAmount.value) || 0;
+  saveCustomerBtn?.addEventListener("click", () => {
+    const name = inputName.value.trim();
+    const phone = inputPhone.value.trim();
+    const orders = parseInt(inputOrders.value) || 0;
+    const amount = parseFloat(inputAmount.value) || 0;
 
-      if (!name || !phone) return;
+    if (!name || !phone) return;
 
-      if (editIndex >= 0) {
-        customers[editIndex] = {
-          name,
-          phone,
-          totalOrders: orders,
-          amount,
-          redeemed: customers[editIndex].redeemed || 0
-        };
-      } else {
-        customers.push({
-          name,
-          phone,
-          totalOrders: orders,
-          amount,
-          redeemed: 0
-        });
-      }
+    if (editIndex >= 0) {
+      const oldPhone = customers[editIndex].phone;
+      customers[editIndex] = {
+        ...customers[editIndex],
+        name,
+        phone,
+        totalOrders: orders,
+        amount
+      };
+      updateOrdersWithCustomerChange(oldPhone, phone, name);
+    } else {
+      customers.push({ name, phone, totalOrders: orders, amount, redeemed: 0 });
+    }
 
-      saveCustomers();
-      renderCustomers();
-      closeModal();
-    });
-  }
+    saveCustomers();
+    renderCustomers();
+    closeModal();
+  });
 
-  // ========= SEARCH FUNCTIONALITY =========
-  if (searchInput) {
-    searchInput.addEventListener("input", (e) => {
-      const query = e.target.value.toLowerCase();
-      const filtered = customers.filter(c =>
-        c.name.toLowerCase().includes(query) ||
-        c.phone.toLowerCase().includes(query)
-      );
-      renderCustomers(filtered);
-    });
-  }
+  searchInput?.addEventListener("input", (e) => {
+    const q = e.target.value.toLowerCase();
+    const filtered = customers.filter(c =>
+      c.name.toLowerCase().includes(q) || c.phone.toLowerCase().includes(q)
+    );
+    renderCustomers(filtered);
+  });
 
   // ========= INITIAL LOAD =========
   syncFromOrders();
