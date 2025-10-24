@@ -648,3 +648,71 @@ footer {
 
 
 
+/* -------------------- UNIVERSAL HOVER EFFECTS -------------------- */
+
+/* 🔹 Hover effect for all cards (order cards, best sale, sold items, etc.) */
+.order-card:hover,
+.best-sale-card:hover,
+.sold-items-section:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+  transition: all 0.25s ease;
+}
+
+/* 🔹 Hover effect for summary boxes */
+.summary > div:hover {
+  background: #f1f5f9;
+  transform: scale(1.02);
+  transition: all 0.25s ease;
+}
+
+/* 🔹 Hover effect for buttons (all types) */
+button:hover,
+.btn-view:hover,
+.btn-delete:hover,
+.orange-btn:hover,
+.green-btn:hover,
+.red-btn:hover,
+.blue-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+}
+
+/* 🔹 Active press feedback */
+button:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+/* 🔹 Hover for pagination buttons */
+.pagination button:hover {
+  background: #0ea5a4;
+  color: #fff;
+  border-color: #0ea5a4;
+}
+
+/* 🔹 Navbar links */
+.navbar a:hover {
+  color: #facc15;
+  transition: color 0.2s ease;
+}
+
+/* 🔹 Hover effect for filter inputs and selects */
+.filter-bar input:hover,
+.filter-bar select:hover {
+  border-color: #0ea5a4;
+  box-shadow: 0 0 0 2px rgba(14, 165, 164, 0.15);
+  transition: all 0.2s ease;
+}
+
+/* 🔹 Hover for sold items list entries */
+.sold-items-list li:hover {
+  background: #f9fafb;
+  transform: scale(1.01);
+  transition: all 0.2s ease;
+}
+
+
+
