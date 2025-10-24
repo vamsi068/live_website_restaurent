@@ -251,3 +251,57 @@ footer {
 footer:hover {
   background: #e45a24;
 }
+
+
+/* -------------------- CUSTOMER STATS -------------------- */
+.customer-stats {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  background: #fff;
+  padding: 14px;
+  margin-top: 20px;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+  flex-wrap: wrap;
+}
+
+.customer-stats .stats-card {
+  flex: 1 1 180px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.customer-stats .stats-card.new {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.customer-stats .stats-card.repeat {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.customer-stats .stats-card.total {
+  background: #dbeafe;
+  color: #1e3a8a;
+}
+
+.customer-stats .stats-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.07);
+}
+
+/* Add gap between customer stats and customers table */
+.customer-stats {
+  margin-bottom: 30px; /* Adjust the value as needed */
+}
+
+/* Optional: ensure table has some top margin if needed */
+#customerTable {
+  margin-top: 30px; /* Adjust if needed */
+}
