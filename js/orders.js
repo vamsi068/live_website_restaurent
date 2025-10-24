@@ -737,11 +737,11 @@ function sendWhatsAppBill(order) {
   customerMobile = customerMobile.replace(/\D/g, "");
   if (!customerMobile.startsWith("91")) customerMobile = "91" + customerMobile;
 
-  // Load customers
+  // Load customers from localStorage
   const customers = JSON.parse(localStorage.getItem("customers")) || [];
   const normalize = phone => (phone || "").replace(/\D/g, "");
 
-  // Try to find a matching record (by either customerNumber or customerMobile)
+  // Try to find the customer by number or mobile
   const customerData = customers.find(c =>
     normalize(c.phone) === normalize(order.customerNumber) ||
     normalize(c.phone) === normalize(order.customerMobile)
@@ -753,13 +753,19 @@ function sendWhatsAppBill(order) {
   let redeemed = 0;
 
   if (customerData) {
-    totalOrders = customerData.totalOrders || 0;
+    // ✅ increment because this new order will be added
+    totalOrders = (customerData.totalOrders || 0) + 1;
     redeemed = customerData.redeemed || 0;
-    const totalEarned = Math.floor(totalOrders / 10);
-    rewardPoints = Math.max(0, totalEarned - redeemed);
+  } else {
+    // ✅ first-time customer
+    totalOrders = 1;
   }
 
-  // WhatsApp message
+  // Calculate reward points (1 free meal per 10 orders)
+  const totalEarned = Math.floor(totalOrders / 10);
+  rewardPoints = Math.max(0, totalEarned - redeemed);
+
+  // Construct WhatsApp message
   let message = `*Street Magic Bill*\n`;
   message += `Order #${order.id}\n`;
   message += `Date: ${new Date(order.date).toLocaleString()}\n\n`;
@@ -769,16 +775,16 @@ function sendWhatsAppBill(order) {
     message += `• ${it.name}${variant} x${it.qty} - ₹${(it.price * it.qty).toFixed(2)}\n`;
   });
 
-    message += `\n*Total: ₹${order.total.toFixed(2)}*\n`;
-    message += `*Total Orders:* ${totalOrders}\n`;
-    message += `*Reward Points:* ${rewardPoints}\n\n`; // ← added extra \n here
-    message += `_Complete 10 orders and you’ll get 1 reward point = 1 free meal_\n\n`;
-    message += `Thank you for dining with Street Magic!`;
-
+  message += `\n*Total: ₹${order.total.toFixed(2)}*\n`;
+  message += `*Total Orders:* ${totalOrders}\n`;
+  message += `*Reward Points:* ${rewardPoints}\n\n`;
+  message += `_Complete 10 orders and you’ll get 1 reward point = 1 free meal_\n\n`;
+  message += `Thank you for dining with Street Magic!`;
 
   const whatsappUrl = `https://wa.me/${customerMobile}?text=${encodeURIComponent(message)}`;
   window.open(whatsappUrl, "_blank");
 }
+
 
 
 /* ========= UPDATE MODAL TOTAL ========= */
