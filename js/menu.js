@@ -501,18 +501,17 @@ document.getElementById("saveMenuItem")?.addEventListener("click", () => {
 // CART: addToCart() + renderCart()
 // =======================
 function addToCart({ id = null, name = "", price = 0, variantQty = "" } = {}) {
-  // Accept either object with id or id-only call
   let item = null;
   if (id) item = menuItems.find(m => m.id === id);
   if (!item && name) {
-    // fallback: create a simple object
-    const fallback = { id: id || generateId(), name, price, qty: 0, image: "" };
-    item = fallback;
+    // fallback object
+    item = { id: id || generateId(), name, price, image: "" };
   }
   if (!item) return;
 
-  // find in cart
-  const existing = cart.find(c => c.id === item.id);
+  // Make cart key unique by id + variant
+  const existing = cart.find(c => c.id === item.id && c.variantQty === variantQty);
+
   if (existing) {
     existing.qty += 1;
   } else {
@@ -528,9 +527,8 @@ function addToCart({ id = null, name = "", price = 0, variantQty = "" } = {}) {
 
   saveCart();
   renderCart();
-  // optional small feedback
-  // alert(`${item.name} added to cart`);
 }
+
 
 function renderCart() {
   const list = document.getElementById("cartList");
