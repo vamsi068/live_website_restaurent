@@ -76,38 +76,41 @@ function calculateRewards(customer) {
 
   // ========= RENDER FUNCTION =========
   function renderCustomers(filtered = customers) {
-    if (!customersList) return;
+  if (!customersList) return;
 
-    customersList.innerHTML = filtered.map((c, i) => {
-      const totalRewards = calculateRewards(c);
-      const redeemed = c.redeemed || 0;
-      const remainingRewards = Math.max(0, totalRewards - redeemed); // never negative
+  // 🔹 Sort by Total Orders (descending)
+  filtered = [...filtered].sort((a, b) => (b.totalOrders || 0) - (a.totalOrders || 0));
 
-      const rewardText = remainingRewards > 0
-        ? `🎉 ${remainingRewards} Free Meal${remainingRewards > 1 ? 's' : ''} Available`
-        : "No Rewards";
+  customersList.innerHTML = filtered.map((c, i) => {
+    const totalRewards = calculateRewards(c);
+    const redeemed = c.redeemed || 0;
+    const remainingRewards = Math.max(0, totalRewards - redeemed);
 
-      return `
-        <tr>
-          <td class="p-2">${i + 1}</td>
-          <td class="p-2">${c.name}</td>
-          <td class="p-2">${c.phone}</td>
-          <td class="p-2">${c.totalOrders}</td>
-          <td class="p-2">${rewardText}</td>
-          <td class="p-2">${c.amount ? c.amount.toFixed(2) : "0.00"}</td>
-          <td class="p-2">
-            <button data-index="${i}" class="redeem-btn bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600">
-              ${remainingRewards > 0 ? "Redeem 1" : "No Rewards"}
-            </button>
-          </td>
-          <td class="p-2 actions flex gap-2">
-            <button data-index="${i}" class="edit-btn bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600">Edit</button>
-            <button data-index="${i}" class="delete-btn bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Delete</button>
-            <button data-index="${i}" class="pdf-btn bg-indigo-500 text-white px-2 py-1 rounded hover:bg-indigo-600">📄 WhatsApp</button>
-          </td>
-        </tr>
-      `;
-    }).join("");
+    const rewardText = remainingRewards > 0
+      ? `🎉 ${remainingRewards} Free Meal${remainingRewards > 1 ? 's' : ''} Available`
+      : "No Rewards";
+
+    return `
+      <tr>
+        <td class="p-2">${i + 1}</td>
+        <td class="p-2">${c.name}</td>
+        <td class="p-2">${c.phone}</td>
+        <td class="p-2">${c.totalOrders}</td>
+        <td class="p-2">${rewardText}</td>
+        <td class="p-2">${c.amount ? c.amount.toFixed(2) : "0.00"}</td>
+        <td class="p-2">
+          <button data-index="${i}" class="redeem-btn bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600">
+            ${remainingRewards > 0 ? "Redeem 1" : "No Rewards"}
+          </button>
+        </td>
+        <td class="p-2 actions flex gap-2">
+          <button data-index="${i}" class="edit-btn bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600">Edit</button>
+          <button data-index="${i}" class="delete-btn bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Delete</button>
+          <button data-index="${i}" class="pdf-btn bg-indigo-500 text-white px-2 py-1 rounded hover:bg-indigo-600">📄 WhatsApp</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
 
     // ===== DELETE CUSTOMER =====
     document.querySelectorAll(".delete-btn").forEach(btn => {
