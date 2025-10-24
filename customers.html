@@ -44,8 +44,20 @@
         lass="w-full sm:w-1/2 border rounded-lg p-2 focus:ring-2 focus:ring-blue-400 outline-none"
       >
     </div>
-  
 
+    <!-- ===== CUSTOMER STATS SECTION ===== -->
+     <section id="customerStats" class="customer-stats">
+      <div class="stats-card new">
+        🆕 New Customers Today: <span id="newCustomersCount">0</span>
+      </div>
+      <div class="stats-card repeat">
+        🔁 Repeat Customers: <span id="repeatCustomersCount">0</span>
+      </div>
+      <div class="stats-card total">
+       👥 Total Customers: <span id="totalCustomersCount">0</span>
+      </div>
+    </section>
+  
     <!-- Customer Table -->
     <div class="overflow-x-auto bg-white rounded-xl shadow p-4">
       <table class="w-full text-left table-auto border-collapse" id="customersTable">
@@ -66,14 +78,16 @@
         </tbody>
       </table>
     </div>
-  </main>
 
-  <!-- ===== Add/Edit Customer Modal ===== -->
-  <div id="customerModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-xl shadow-lg p-6 w-[90%] max-w-md relative max-h-[90vh] overflow-y-auto">
-      <h3 class="text-2xl font-bold mb-4 text-center sticky top-0 bg-white pb-2" id="modalTitle">Add Customer</h3>
-      
-      <div class="space-y-4 mb-4">
+
+    
+
+
+    <!-- ===== Add/Edit Customer Modal ===== -->
+    <div id="customerModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+      <div class="bg-white rounded-xl shadow-lg p-6 w-[90%] max-w-md relative max-h-[90vh] overflow-y-auto">
+        <h3 class="text-2xl font-bold mb-4 text-center sticky top-0 bg-white pb-2" id="modalTitle">Add Customer</h3>
+        <div class="space-y-4 mb-4">
         <div>
           <label class="block text-sm font-semibold mb-1">Name</label>
           <input type="text" id="customerName" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 outline-none">
@@ -99,6 +113,13 @@
       </div>
     </div>
   </div>
+
+
+    
+  </main>
+
+
+  
 
   <!-- ===== Footer ===== -->
   <footer class="bg-black text-white text-center p-4 mt-6">
