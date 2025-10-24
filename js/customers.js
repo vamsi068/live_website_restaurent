@@ -97,43 +97,73 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ========= RENDER FUNCTION (uses phone as unique ID) =========
   function renderCustomers(filtered = customers) {
-    if (!customersList) return;
+  if (!customersList) return;
 
-    filtered = [...filtered].sort((a, b) => (b.totalOrders || 0) - (a.totalOrders || 0));
+  filtered = [...filtered].sort((a, b) => (b.totalOrders || 0) - (a.totalOrders || 0));
 
-    customersList.innerHTML = filtered.map((c, i) => {
-      const totalRewards = calculateRewards(c);
-      const redeemed = c.redeemed || 0;
-      const remainingRewards = Math.max(0, totalRewards - redeemed);
-      const rewardText = remainingRewards > 0
-        ? `🎉 ${remainingRewards} Free Meal${remainingRewards > 1 ? 's' : ''} Available`
-        : "No Rewards";
+  customersList.innerHTML = filtered.map((c, i) => {
+    const totalRewards = calculateRewards(c);
+    const redeemed = c.redeemed || 0;
+    const remainingRewards = Math.max(0, totalRewards - redeemed);
+    const rewardText = remainingRewards > 0
+      ? `🎉 ${remainingRewards} Free Meal${remainingRewards > 1 ? 's' : ''} Available`
+      : "No Rewards";
 
-      return `
-        <tr data-phone="${c.phone}">
-          <td class="p-2">${i + 1}</td>
-          <td class="p-2">${c.name}</td>
-          <td class="p-2">${c.phone}</td>
-          <td class="p-2">${c.totalOrders}</td>
-          <td class="p-2">${rewardText}</td>
-          <td class="p-2">${c.amount ? c.amount.toFixed(2) : "0.00"}</td>
-          <td class="p-2">
-            <button data-phone="${c.phone}" class="redeem-btn bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600">
-              ${remainingRewards > 0 ? "Redeem 1" : "No Rewards"}
-            </button>
-          </td>
-          <td class="p-2 actions flex gap-2">
-            <button data-phone="${c.phone}" class="edit-btn bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600">Edit</button>
-            <button data-phone="${c.phone}" class="delete-btn bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Delete</button>
-            <button data-phone="${c.phone}" class="pdf-btn bg-indigo-500 text-white px-2 py-1 rounded hover:bg-indigo-600">📄 WhatsApp</button>
-          </td>
-        </tr>
-      `;
-    }).join("");
+    return `
+      <tr data-phone="${c.phone}">
+        <td class="p-2">${i + 1}</td>
+        <td class="p-2">${c.name}</td>
+        <td class="p-2">${c.phone}</td>
+        <td class="p-2">${c.totalOrders}</td>
+        <td class="p-2">${rewardText}</td>
+        <td class="p-2">${c.amount ? c.amount.toFixed(2) : "0.00"}</td>
+        <td class="p-2">
+          <button data-phone="${c.phone}" class="redeem-btn bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600">
+            ${remainingRewards > 0 ? "Redeem 1" : "No Rewards"}
+          </button>
+        </td>
+        <td class="p-2 actions flex gap-2">
+          <button data-phone="${c.phone}" class="edit-btn bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600">Edit</button>
+          <button data-phone="${c.phone}" class="delete-btn bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Delete</button>
+          <button data-phone="${c.phone}" class="pdf-btn bg-indigo-500 text-white px-2 py-1 rounded hover:bg-indigo-600">📄 WhatsApp</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
 
-    attachEventHandlers();
-    renderStats();
+  attachEventHandlers();
+  renderStats();
+  renderWrongNumbers(); // ✅ Show wrong numbers separately
+}
+
+
+
+function renderWrongNumbers() {
+  const wrongNumbersList = document.getElementById("wrongNumbersList");
+  if (!wrongNumbersList) return;
+
+  // Customers whose phone number is not exactly 10 digits
+  const wrongNumbers = customers.filter(c => !/^\d{10}$/.test(c.phone));
+
+  if (wrongNumbers.length === 0) {
+    wrongNumbersList.innerHTML = `
+      <tr>
+        <td colspan="5" class="text-center text-red-600 py-2">No wrong numbers found</td>
+      </tr>
+    `;
+  } else {
+    wrongNumbersList.innerHTML = wrongNumbers.map((c, i) => `
+      <tr class="bg-red-50">
+        <td class="p-2 border">${i + 1}</td>
+        <td class="p-2 border">${c.name}</td>
+        <td class="p-2 border">${c.phone || "N/A"}</td>
+        <td class="p-2 border">${c.totalOrders || 0}</td>
+        <td class="p-2 border">${c.amount ? c.amount.toFixed(2) : "0.00"}</td>
+      </tr>
+    `).join("");
   }
+}
+
 
   // ========= ATTACH HANDLERS (uses phone instead of index) =========
   function attachEventHandlers() {
@@ -218,16 +248,22 @@ Thank you for being a valued customer!`;
 
   // ========= STATS SECTION =========
   function renderStats() {
-    if (!newCustEl || !repeatCustEl || !totalCustEl) return;
+  if (!newCustEl || !repeatCustEl || !totalCustEl) return;
 
-    const total = customers.length;
-    const newCustomers = customers.filter(c => c.totalOrders === 1).length;
-    const repeatCustomers = total - newCustomers;
+  const total = customers.length;
+  const newCustomers = customers.filter(c => c.totalOrders === 1).length;
+  const repeatCustomers = total - newCustomers;
 
-    newCustEl.textContent = newCustomers;
-    repeatCustEl.textContent = repeatCustomers;
-    totalCustEl.textContent = total;
-  }
+  // Wrong numbers
+  const wrongNumbers = customers.filter(c => !/^\d{10}$/.test(c.phone)).length;
+  const wrongNumbersEl = document.getElementById("wrongNumbersCount");
+
+  newCustEl.textContent = newCustomers;
+  repeatCustEl.textContent = repeatCustomers;
+  totalCustEl.textContent = total;
+  if (wrongNumbersEl) wrongNumbersEl.textContent = wrongNumbers;
+}
+
 
   // ========= MODAL CONTROLS =========
   function openModal() {
