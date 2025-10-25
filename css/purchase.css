@@ -687,3 +687,13 @@ button:hover, .btn:hover {
   margin: 0 auto;
 }
 
+/* Add spacing between main sections */
+.summary-section,
+.records-section,
+#inventorySummary,
+.summary-cards-grid,
+.purchase-layout {
+  margin-bottom: 30px; /* adjust as needed */
+}
+
+
