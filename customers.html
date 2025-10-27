@@ -105,6 +105,9 @@
       </table>
     </div>
 
+    <!-- ✅ PAGINATION CONTAINER ADDED HERE -->
+    <div id="paginationContainer" class="flex justify-center mb-8"></div>
+
     <!-- ===== Add/Edit Customer Modal ===== -->
     <div id="customerModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
       <div class="bg-white rounded-xl shadow-lg p-6 w-[90%] max-w-md relative max-h-[90vh] overflow-y-auto">
@@ -136,29 +139,6 @@
       </div>
     </div>
 
-    <!-- ===== WRONG NUMBERS SECTION =====
-    <section class="mb-8">
-      <h3 class="text-xl font-semibold text-red-700 mb-2">⚠️ Customers with Wrong Numbers</h3>
-      <div class="overflow-x-auto bg-red-50 border border-red-300 rounded-xl shadow p-4">
-        <table class="w-full text-left table-auto border-collapse" id="wrongNumbersTable">
-          <thead>
-            <tr class="bg-red-200">
-              <th class="p-2 border">#</th>
-              <th class="p-2 border">Name</th>
-              <th class="p-2 border">Mobile No</th>
-              <th class="p-2 border">Total Orders</th>
-              <th class="p-2 border">Amount Spent</th>
-            </tr>
-          </thead>
-          <tbody id="wrongNumbersList">
-            <tr>
-              <td colspan="5" class="text-center text-red-600 py-2">No wrong numbers found</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section> -->
-
     <!-- ===== Customer Analytics Chart ===== -->
     <section class="mb-8">
       <h3 class="text-xl font-semibold mb-2">📊 Customer Analytics</h3>
@@ -172,8 +152,6 @@
     </section>
 
   </main>
-
-  
 
   <!-- ===== Footer ===== -->
   <footer class="bg-black text-white text-center p-4 mt-6">
