@@ -974,43 +974,60 @@ if (savedCat) {
   document.getElementById("kotBtn")?.addEventListener("click", printKOT);
   document.getElementById("printBtn")?.addEventListener("click", printBill);
 
-  // WhatsApp Bill sender
-document.getElementById("whatsappBillBtn")?.addEventListener("click", () => {
-  if (cart.length === 0) {
-    alert("Cart is empty!");
-    return;
+  /* ===========================================================
+   SEND WHATSAPP BILL — FIXED
+   =========================================================== */
+  function sendWhatsAppBill(order) {
+  try {
+    // Get customer number from order (fallback to prompt)
+    let phone = order.customerPhone || "";
+
+    if (!phone) {
+      phone = prompt("Enter customer WhatsApp number (with country code, e.g., 91XXXXXXXXXX):");
+      if (!phone) {
+        alert("WhatsApp number required to send the bill!");
+        return;
+      }
+    }
+
+    // Clean number: remove spaces, +, -, etc.
+    phone = phone.replace(/\D/g, ""); // keep only digits
+
+    // --- Format Bill Message ---
+    let message = `🧾 *Street Magic Bill*\n\n`;
+    message += `*Customer:* ${order.customerName || "Guest"}\n`;
+    message += `*Date:* ${order.date}\n\n`;
+
+    // Add order items
+    message += `*Items:*\n`;
+    order.items.forEach((item, idx) => {
+      message += `${idx + 1}. ${item.name} × ${item.qty} = ₹${item.total}\n`;
+    });
+
+    // Add totals
+    message += `\n*Subtotal:* ₹${order.subtotal.toFixed(2)}\n`;
+    if (order.discount && order.discount > 0)
+      message += `*Discount:* ₹${order.discount.toFixed(2)}\n`;
+    if (order.tax && order.tax > 0)
+      message += `*Tax:* ₹${order.tax.toFixed(2)}\n`;
+    message += `*Total:* ₹${order.total.toFixed(2)}\n\n`;
+
+    // Add footer
+    message += `Thank you for your order! 🙏\nStreet Magic`;
+
+    // Encode for WhatsApp URL
+    const encodedMessage = encodeURIComponent(message);
+    const waUrl = `https://wa.me/${phone}?text=${encodedMessage}`;
+
+    // Open WhatsApp Web in a new tab
+    window.open(waUrl, "_blank");
+
+  } catch (err) {
+    console.error("Error sending WhatsApp bill:", err);
+    alert("Failed to send WhatsApp bill. Check console for details.");
+  }
   }
 
-  const order = saveOrder("BILL");
-  if (!order) return;
-
-  let customerMobile = order.customerMobile || document.getElementById("orderCustomerMobile")?.value?.trim();
-  if (!customerMobile) {
-    alert("Please enter a customer mobile number to send via WhatsApp.");
-    return;
-  }
-
-  // Clean number: remove spaces, +, -, etc.
-  customerMobile = customerMobile.replace(/\D/g, "");
-  if (!customerMobile.startsWith("91")) customerMobile = "91" + customerMobile;
-
-  // Build message
-  let message = `🧾 *Street Magic Bill* 🧾\n`;
-  message += `Order #${order.id}\n`;
-  message += `Date: ${new Date(order.date).toLocaleString()}\n`;
-  message += `Table: ${order.table}\n\n`;
-
-  order.items.forEach(it => {
-    const variantText = it.variantQty ? ` (${it.variantQty})` : "";
-    message += `• ${it.name}${variantText} x${it.qty} - ₹${(it.price * it.qty).toFixed(2)}\n`;
-  });
-
-  message += `\nSubtotal: ₹${order.subtotal.toFixed(2)}\nDiscount: ₹${order.discount.toFixed(2)}\n*Total: ₹${order.total.toFixed(2)}*\n\n`;
-  message += `Thank you for dining with Street Magic! 🍔✨`;
-
-  const whatsappUrl = `https://wa.me/${customerMobile}?text=${encodeURIComponent(message)}`;
-  window.open(whatsappUrl, "_blank");
-});
 
 
   // dropdown wiring
