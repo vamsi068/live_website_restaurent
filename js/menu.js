@@ -977,7 +977,7 @@ if (savedCat) {
   /* ===========================================================
    SEND WHATSAPP BILL — FIXED
    =========================================================== */
-  function sendWhatsAppBill(order) {
+function sendWhatsAppBill(order) {
   try {
     // Get customer number from order (fallback to prompt)
     let phone = order.customerPhone || "";
@@ -1026,7 +1026,7 @@ if (savedCat) {
     console.error("Error sending WhatsApp bill:", err);
     alert("Failed to send WhatsApp bill. Check console for details.");
   }
-  }
+}
 
 
 
