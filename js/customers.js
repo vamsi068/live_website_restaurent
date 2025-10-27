@@ -191,7 +191,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ========= PAGINATION =========
   let currentPage = 1;
-  const pageSize = 20;
+  const pageSize = 10;
 
   function renderPagination(totalItems) {
   const paginationContainer = document.getElementById("paginationContainer");
