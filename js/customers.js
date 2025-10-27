@@ -359,24 +359,77 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ========= CHART =========
   let chartInstance = null;
+  let frequencyChartInstance = null;
+
   function renderCharts() {
-    if (!customersChartEl) return;
-    const labels = customers.map(c => c.name);
-    const orders = customers.map(c => c.totalOrders);
-    const rewards = customers.map(c => calculateRewards(c));
-    if (chartInstance) chartInstance.destroy();
-    chartInstance = new Chart(customersChartEl, {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [
-          { label: "Total Orders", data: orders, backgroundColor: "rgba(59,130,246,0.6)" },
-          { label: "Rewards", data: rewards, backgroundColor: "rgba(253,224,71,0.6)" }
-        ]
+  if (!customersChartEl) return;
+
+  // === Chart 1: Customer Analytics ===
+  const labels = customers.map(c => c.name);
+  const orders = customers.map(c => c.totalOrders);
+  const rewards = customers.map(c => calculateRewards(c));
+
+  if (chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(customersChartEl, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        { label: "Total Orders", data: orders, backgroundColor: "rgba(59,130,246,0.6)" },
+        { label: "Rewards", data: rewards, backgroundColor: "rgba(253,224,71,0.6)" }
+      ]
+    },
+    options: { responsive: true, plugins: { legend: { position: "top" } } }
+  });
+
+  // === Chart 2: Visit Frequency ===
+  const visitFrequencyEl = document.getElementById("visitFrequencyChart");
+  if (!visitFrequencyEl) return;
+
+  // Build frequency map
+  const frequencyMap = {};
+  customers.forEach(c => {
+    const visits = c.totalOrders || 0;
+    if (!frequencyMap[visits]) frequencyMap[visits] = 0;
+    frequencyMap[visits]++;
+  });
+
+  // Sort by visit count
+  const sortedVisits = Object.keys(frequencyMap).sort((a, b) => a - b);
+  const visitCounts = sortedVisits.map(k => frequencyMap[k]);
+
+  // Destroy old chart if exists
+  if (frequencyChartInstance) frequencyChartInstance.destroy();
+
+  // Render new frequency chart
+  frequencyChartInstance = new Chart(visitFrequencyEl, {
+    type: "bar",
+    data: {
+      labels: sortedVisits.map(v => `${v} visit${v > 1 ? "s" : ""}`),
+      datasets: [
+        {
+          label: "Number of Customers",
+          data: visitCounts,
+          backgroundColor: "rgba(16,185,129,0.6)" // teal color
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: "top" },
+        title: {
+          display: true,
+          text: "Customer Visit Frequency (How Many Times Each Customer Visited)"
+        }
       },
-      options: { responsive: true, plugins: { legend: { position: "top" } } }
-    });
+      scales: {
+        y: { beginAtZero: true, ticks: { precision: 0 } }
+      }
+    }
+  });
   }
+
 
   // ========= INITIALIZE =========
   syncFromOrders();
