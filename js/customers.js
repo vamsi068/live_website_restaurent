@@ -147,42 +147,78 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function renderCustomers(filtered = customers) {
-    // Apply filter
-    const type = filterType?.value || "all";
-    if (type === "new") filtered = filtered.filter(c => c.totalOrders === 1);
-    else if (type === "repeat") filtered = filtered.filter(c => c.totalOrders > 1);
-    else if (type === "wrong") filtered = filtered.filter(c => !/^\d{10}$/.test(c.phone));
+  const type = filterType?.value || "all";
+  if (type === "new") filtered = filtered.filter(c => c.totalOrders === 1);
+  else if (type === "repeat") filtered = filtered.filter(c => c.totalOrders > 1);
+  else if (type === "wrong") filtered = filtered.filter(c => !/^\d{10}$/.test(c.phone));
 
-    filtered = [...filtered].sort((a, b) => (b.totalOrders || 0) - (a.totalOrders || 0));
+  filtered = [...filtered].sort((a, b) => (b.totalOrders || 0) - (a.totalOrders || 0));
 
-    customersList.innerHTML = filtered.map((c, i) => {
-      const rewards = calculateRewards(c);
-      const tier = rewardTier(c);
-      const tierBadge = tier ? `<span class="ml-1 px-2 py-1 text-sm bg-yellow-300 rounded">${tier}</span>` : "";
-      return `
-        <tr data-phone="${c.phone}" class="hover:bg-gray-50">
-          <td class="p-2 border">${i + 1}</td>
-          <td class="p-2 border">${c.name}${tierBadge}</td>
-          <td class="p-2 border">${c.phone}</td>
-          <td class="p-2 border">${c.totalOrders}</td>
-          <td class="p-2 border">${rewards > 0 ? `🎉 ${rewards} Free Meal${rewards > 1 ? "s" : ""}` : "No Rewards"}</td>
-          <td class="p-2 border">${c.amount?.toFixed(2) || "0.00"}</td>
-          <td class="p-2 border">
-            <button class="redeem-btn bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600">${rewards > 0 ? "Redeem 1" : "No Rewards"}</button>
-          </td>
-          <td class="p-2 flex gap-2">
-            <button class="edit-btn bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600">Edit</button>
-            <button class="delete-btn bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Delete</button>
-            <button class="whatsapp-btn bg-indigo-500 text-white px-2 py-1 rounded hover:bg-indigo-600">📄 WhatsApp</button>
-          </td>
-        </tr>`;
-    }).join("");
+  // Apply pagination
+  const start = (currentPage - 1) * pageSize;
+  const paginated = filtered.slice(start, start + pageSize);
 
-    attachHandlers();
-    renderStats();
-    renderWrongNumbers();
-    renderCharts();
+  customersList.innerHTML = paginated.map((c, i) => {
+    const rewards = calculateRewards(c);
+    const tier = rewardTier(c);
+    const tierBadge = tier ? `<span class="ml-1 px-2 py-1 text-sm bg-yellow-300 rounded">${tier}</span>` : "";
+    return `
+      <tr data-phone="${c.phone}" class="hover:bg-gray-50">
+        <td class="p-2 border">${start + i + 1}</td>
+        <td class="p-2 border">${c.name}${tierBadge}</td>
+        <td class="p-2 border">${c.phone}</td>
+        <td class="p-2 border">${c.totalOrders}</td>
+        <td class="p-2 border">${rewards > 0 ? `🎉 ${rewards} Free Meal${rewards > 1 ? "s" : ""}` : "No Rewards"}</td>
+        <td class="p-2 border">${c.amount?.toFixed(2) || "0.00"}</td>
+        <td class="p-2 border">
+          <button class="redeem-btn bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600">${rewards > 0 ? "Redeem 1" : "No Rewards"}</button>
+        </td>
+        <td class="p-2 flex gap-2">
+          <button class="edit-btn bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600">Edit</button>
+          <button class="delete-btn bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Delete</button>
+          <button class="whatsapp-btn bg-indigo-500 text-white px-2 py-1 rounded hover:bg-indigo-600">📄 WhatsApp</button>
+        </td>
+      </tr>`;
+  }).join("");
+
+  attachHandlers();
+  renderStats();
+  renderWrongNumbers();
+  renderCharts();
+  renderPagination(filtered.length);
+}
+
+
+  // ========= PAGINATION =========
+  let currentPage = 1;
+  const pageSize = 20;
+
+  function renderPagination(totalItems) {
+  const paginationContainer = document.getElementById("paginationContainer");
+  if (!paginationContainer) return;
+
+  const totalPages = Math.ceil(totalItems / pageSize);
+  let html = `<div class="flex justify-center items-center mt-4 flex-wrap gap-1">`;
+
+  // Prev button
+  html += `<button class="px-3 py-1 border rounded ${currentPage === 1 ? 'bg-gray-200 cursor-not-allowed' : 'bg-white hover:bg-gray-100'}" ${currentPage === 1 ? 'disabled' : 'onclick="changePage(' + (currentPage - 1) + ')"'}>‹ Prev</button>`;
+
+  for (let i = 1; i <= totalPages; i++) {
+    html += `<button class="px-3 py-1 border rounded ${i === currentPage ? 'bg-teal-600 text-white' : 'bg-white hover:bg-gray-100'}" onclick="changePage(${i})">${i}</button>`;
   }
+
+  // Next button
+  html += `<button class="px-3 py-1 border rounded ${currentPage === totalPages ? 'bg-gray-200 cursor-not-allowed' : 'bg-white hover:bg-gray-100'}" ${currentPage === totalPages ? 'disabled' : 'onclick="changePage(' + (currentPage + 1) + ')"'}>Next ›</button>`;
+
+  html += `</div>`;
+  paginationContainer.innerHTML = html;
+  }
+
+  window.changePage = function (page) {
+  currentPage = page;
+  renderCustomers();
+  };
+
 
   // ========= EVENT HANDLERS =========
 
