@@ -746,24 +746,21 @@ function sendWhatsAppBill(order) {
   const customers = JSON.parse(localStorage.getItem("customers")) || [];
   const normalize = phone => (phone || "").replace(/\D/g, "");
 
-  // Try to find the customer by number or mobile
+  // Find customer by number or mobile
   const customerData = customers.find(c =>
-    normalize(c.phone) === normalize(order.customerNumber) ||
-    normalize(c.phone) === normalize(order.customerMobile)
+    normalize(c.number) === normalize(order.customerNumber) ||
+    normalize(c.number) === normalize(order.customerMobile)
   );
 
   // Default values
-  let totalOrders = 0;
+  let totalOrders = 1; // assume first order
   let rewardPoints = 0;
   let redeemed = 0;
 
   if (customerData) {
-    // ✅ increment because this new order will be added
-    totalOrders = (customerData.totalOrders || 0) + 1;
+    // ✅ Use exact totalOrders (no +1)
+    totalOrders = customerData.totalOrders || 1;
     redeemed = customerData.redeemed || 0;
-  } else {
-    // ✅ first-time customer
-    totalOrders = 1;
   }
 
   // Calculate reward points (1 free meal per 10 orders)
@@ -789,8 +786,6 @@ function sendWhatsAppBill(order) {
   const whatsappUrl = `https://wa.me/${customerMobile}?text=${encodeURIComponent(message)}`;
   window.open(whatsappUrl, "_blank");
 }
-
-
 
 /* ========= UPDATE MODAL TOTAL ========= */
 function updateModalTotal() {
