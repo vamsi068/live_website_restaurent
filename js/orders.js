@@ -738,40 +738,34 @@ function sendWhatsAppBill(order) {
     return;
   }
 
-  // Clean number and ensure country code
   customerMobile = customerMobile.replace(/\D/g, "");
   if (!customerMobile.startsWith("91")) customerMobile = "91" + customerMobile;
 
-  // Load customers from localStorage
   const customers = JSON.parse(localStorage.getItem("customers")) || [];
   const normalize = phone => (phone || "").replace(/\D/g, "");
 
-  // Try to find the customer by number or mobile
   const customerData = customers.find(c =>
     normalize(c.phone) === normalize(order.customerNumber) ||
     normalize(c.phone) === normalize(order.customerMobile)
   );
 
-  // Default values
   let totalOrders = 0;
   let rewardPoints = 0;
   let redeemed = 0;
 
   if (customerData) {
-    // ✅ increment because this new order will be added
     totalOrders = (customerData.totalOrders || 0) + 1;
     redeemed = customerData.redeemed || 0;
   } else {
-    // ✅ first-time customer
     totalOrders = 1;
   }
 
-  // Calculate reward points (1 free meal per 10 orders)
   const totalEarned = Math.floor(totalOrders / 10);
   rewardPoints = Math.max(0, totalEarned - redeemed);
 
-  // Construct WhatsApp message
-  let message = `*Street Magic Bill*\n`;
+  // ✅ WhatsApp Message
+  let message = `*Street Magic Bill*\nTangellamudivari Street, Gurunanak Colony, Vijayawada - 520007\n\n`;
+
   message += `Order #${order.id}\n`;
   message += `Date: ${new Date(order.date).toLocaleString()}\n\n`;
 
@@ -783,7 +777,13 @@ function sendWhatsAppBill(order) {
   message += `\n*Total: ₹${order.total.toFixed(2)}*\n`;
   message += `*Total Orders:* ${totalOrders}\n`;
   message += `*Reward Points:* ${rewardPoints}\n\n`;
+
+  // ✅ Added your new branch line below existing offer message
+  
   message += `_Complete 10 orders and you’ll get 1 reward point = 1 free meal_\n\n`;
+  message += `Our Branches: Currency Nagar, Gurunanak Colony\n\n`;
+
+
   message += `Thank you for dining with Street Magic!`;
 
   const whatsappUrl = `https://wa.me/${customerMobile}?text=${encodeURIComponent(message)}`;
@@ -844,4 +844,3 @@ document.addEventListener("DOMContentLoaded", () => {
   displayBestSaleItem();// show today's best sale
   displayTodaysSoldItems(); // show today's sold items
 });
-
