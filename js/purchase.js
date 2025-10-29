@@ -44,36 +44,41 @@ function renderInventorySummary(dateFilter = "") {
   let productCount = 0;
 
   Object.keys(inventory).forEach(productName => {
-  let units = purchases
-    .filter(p => p.item === productName && (!dateFilter || p.date.startsWith(dateFilter)))
-    .reduce((sum, p) => sum + p.qty, 0);
+    // 🧮 Calculate total units and total amount per product
+    const filteredPurchases = purchases.filter(
+      p => p.item === productName && (!dateFilter || p.date.startsWith(dateFilter))
+    );
 
-  // 🧠 Hide items with zero units when a date filter is active
-  if (dateFilter && units === 0) return;
+    let units = filteredPurchases.reduce((sum, p) => sum + p.qty, 0);
+    let totalAmount = filteredPurchases.reduce((sum, p) => sum + p.qty * p.price, 0);
 
-  totalUnits += units;
-  productCount++;
+    // 🧠 Hide items with zero units when a date filter is active
+    if (dateFilter && units === 0) return;
 
-  const imgSrc = images[productName] || "https://via.placeholder.com/100?text=No+Img";
+    totalUnits += units;
+    productCount++;
 
-  const card = document.createElement("div");
-  card.className = "summary-item";
-  card.innerHTML = `
-    <img src="${imgSrc}" alt="${productName}" class="product-thumb"/>
-    <strong class="product-name">${productName}</strong>
-    <p>Units: ${units}</p>
-    <div class="actions">
-      <button class="edit-btn" data-product="${productName}">✏️ Edit</button>
-      <button class="delete-btn" data-product="${productName}">🗑️ Delete</button>
-    </div>
-  `;
-  summaryContainer.appendChild(card);
-});
+    const imgSrc = images[productName] || "https://via.placeholder.com/100?text=No+Img";
 
+    const card = document.createElement("div");
+    card.className = "summary-item";
+    card.innerHTML = `
+      <img src="${imgSrc}" alt="${productName}" class="product-thumb"/>
+      <strong class="product-name">${productName}</strong>
+      <p>Units: ${units}</p>
+      <p><b>Total: ₹${totalAmount.toLocaleString("en-IN")}</b></p>
+      <div class="actions">
+        <button class="edit-btn" data-product="${productName}">✏️ Edit</button>
+        <button class="delete-btn" data-product="${productName}">🗑️ Delete</button>
+      </div>
+    `;
+    summaryContainer.appendChild(card);
+  });
 
   if (countBadge) countBadge.textContent = `${productCount} items`;
   if (unitBadge) unitBadge.textContent = `${totalUnits} units`;
 }
+
 
 // ===== Scoped Edit/Delete Handlers =====
 // 🧩 Run this ONCE globally (not inside renderInventorySummary)
