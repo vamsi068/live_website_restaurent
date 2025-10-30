@@ -11,6 +11,8 @@ let filterDate = "";
 let purchaseChart = null;
 let productChart = null;
 let editIndex = -1;
+let monthFilter = "current";
+
 
 // ===== Save Data =====
 function saveData() {
@@ -215,7 +217,17 @@ function renderPurchases() {
   if (!container) return;
 
   let list = purchases.slice();
-  if (filterDate) list = list.filter(p => p.date.startsWith(filterDate));
+  if (filterDate) {
+    list = list.filter(p => p.date.startsWith(filterDate));
+  } else if (monthFilter === "current") {
+    const ym = new Date().toISOString().slice(0, 7);
+    list = list.filter(p => p.date.startsWith(ym));
+  } else if (monthFilter === "last") {
+    const d = new Date();
+    const lastMonth = new Date(d.getFullYear(), d.getMonth() - 1, 1).toISOString().slice(0, 7);
+    list = list.filter(p => p.date.startsWith(lastMonth));
+  }
+
   list = list.reverse();
 
   if (list.length === 0) {
@@ -243,11 +255,28 @@ function renderPurchases() {
   updateTodaySpent();
   updateMonthSpent();
   updateLastMonthSpent();
-  updatePurchaseChart(filterDate);
-  updateProductChart(filterDate);
-  renderInventorySummary(filterDate);
+
+  let activeDateFilter = filterDate;
+  if (!filterDate && monthFilter === "current") {
+    activeDateFilter = new Date().toISOString().slice(0, 7);
+  } else if (!filterDate && monthFilter === "last") {
+    const d = new Date();
+    activeDateFilter = new Date(d.getFullYear(), d.getMonth() - 1, 1).toISOString().slice(0, 7);
+  }
+
+  updatePurchaseChart(activeDateFilter);
+  updateProductChart(activeDateFilter);
+  updateDailyPurchaseChart(activeDateFilter); // 🆕 Added line
+  renderInventorySummary(activeDateFilter);
   renderProductSelect();
+  
 }
+
+document.getElementById("filterMonth").addEventListener("change", e => {
+  monthFilter = e.target.value;
+  renderPurchases();
+});
+
 
 // ===== Add / Update Purchase =====
 document.getElementById("savePurchaseBtn").addEventListener("click", () => {
@@ -566,8 +595,86 @@ function openEditModal(productName) {
   };
   modal.querySelector(".cancel-edit").addEventListener("click", closeModal);
   modal.addEventListener("click", e => { if (e.target.classList.contains("edit-modal-overlay")) closeModal(); });
-}
+}  
 
+let dailyPurchaseChart = null;
+
+function updateDailyPurchaseChart(dateFilter = "") {
+  let targetMonth = "";
+
+  // 🔹 Determine month to show
+  if (dateFilter && dateFilter.length === 7) {
+    targetMonth = dateFilter; // e.g. "2025-10"
+  } else if (filterDate) {
+    targetMonth = filterDate.slice(0, 7);
+  } else if (monthFilter === "last") {
+    const d = new Date();
+    targetMonth = new Date(d.getFullYear(), d.getMonth() - 1, 1).toISOString().slice(0, 7);
+  } else if (monthFilter === "current") {
+    targetMonth = new Date().toISOString().slice(0, 7);
+  } else {
+    targetMonth = "";
+  }
+
+  // 🔹 Filter purchases
+  let filtered = purchases;
+  if (targetMonth) filtered = purchases.filter(p => p.date.startsWith(targetMonth));
+
+  // 🔹 Calculate totals per day
+  const dayTotals = {};
+  filtered.forEach(p => {
+    const day = p.date.slice(0, 10);
+    if (!dayTotals[day]) dayTotals[day] = 0;
+    dayTotals[day] += p.qty * p.price;
+  });
+
+  // 🔹 Prepare data
+  const labels = Object.keys(dayTotals).sort();
+  const data = labels.map(d => dayTotals[d]);
+
+  const ctx = document.getElementById("dailyPurchaseChart").getContext("2d");
+  if (dailyPurchaseChart) dailyPurchaseChart.destroy();
+
+  // 🔹 Create Bar Chart
+  dailyPurchaseChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "Daily Purchase (₹)",
+        data,
+        backgroundColor: "#8e44ad",
+        borderColor: "#6c3483",
+        borderWidth: 1,
+        borderRadius: 6,
+        barThickness: 28
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => `₹${ctx.raw.toLocaleString("en-IN")}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: "Date" },
+          ticks: { autoSkip: true, maxTicksLimit: 10 }
+        },
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: "Amount (₹)" },
+          ticks: { callback: v => `₹${v.toLocaleString("en-IN")}` }
+        }
+      }
+    }
+  });
+}
 
 // ===== Initial Load =====
 renderAll();
