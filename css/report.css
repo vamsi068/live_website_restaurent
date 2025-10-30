@@ -41,7 +41,7 @@
   border-radius: 8px;
   text-align: center;
   box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-  transition: transform 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .stat-card:hover {
@@ -96,7 +96,6 @@ canvas {
   box-shadow: 0 0 5px rgba(0,0,0,0.1); 
 }
 
-/* Specific Sales Chart Styling */
 #salesChart {
   max-height: 300px; /* adjust height */
 }
@@ -117,7 +116,7 @@ canvas {
   border-radius: 8px;
   box-shadow: 0 0 5px rgba(0,0,0,0.1);
   text-align: center;
-  transition: transform 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .summary-card:hover {
@@ -139,8 +138,8 @@ canvas {
 .summary-card.green { background: #d4edda; }
 .summary-card.blue { background: #cce5ff; }
 .summary-card.gray { background: #e2e3e5; }
-.summary-card.purple { background: #e0c3fc; }   /* Light purple */
-.summary-card.orange { background: #ffe0b2; }   /* Light orange */
+.summary-card.purple { background: #e0c3fc; }
+.summary-card.orange { background: #ffe0b2; }
 .summary-card.red { background: #f8d7da; }
 
 /* =======================
@@ -167,6 +166,7 @@ canvas {
   border-radius: 6px;
   background: #f5f5f5;
   cursor: pointer;
+  transition: background 0.2s ease;
 }
 
 .chart-toggle button.active {
@@ -289,7 +289,6 @@ canvas {
   background: #f2f9ff;
 }
 
-
 #transactionOptions button#exportTransactions {
   background: #28a745;
 }
@@ -298,3 +297,53 @@ canvas {
   background: #1e7e34;
 }
 
+.summary-card.orange {
+  background-color: #ffb84d;
+  color: #333;
+}
+
+/* =======================
+   Global Hover Effects
+======================= */
+
+/* --- Cards (stat-card, summary-card, etc.) --- */
+.stat-card:hover,
+.summary-card:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.25s ease;
+}
+
+/* --- Buttons --- */
+button:hover,
+#transactionOptions button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+/* --- Input and Select fields --- */
+input:hover,
+select:hover {
+  border-color: #4cafef;
+  box-shadow: 0 0 5px rgba(76, 175, 239, 0.4);
+  transition: all 0.2s ease;
+}
+
+/* --- Table Rows --- */
+#transactionList tr:hover {
+  background: #e6f3ff;
+  transition: background 0.2s ease;
+}
+
+/* --- Chart Canvas Hover --- */
+canvas:hover {
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  transform: scale(1.01);
+  transition: all 0.2s ease;
+}
+
+/* --- Universal Smooth Transitions --- */
+* {
+  transition: all 0.2s ease-in-out;
+}
