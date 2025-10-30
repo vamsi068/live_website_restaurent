@@ -697,3 +697,39 @@ button:hover, .btn:hover {
 }
 
 
+/* ===== Scrollable Products Summary ===== */
+#inventorySummary {
+  max-height: 450px;           /* adjust height as needed */
+  overflow-y: auto;            /* enables vertical scrolling */
+  padding-right: 6px;          /* space for scrollbar */
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  scrollbar-width: thin;       /* Firefox scrollbar */
+  scrollbar-color: #bbb #f2f2f2;
+}
+
+/* Optional: for prettier scrollbars (Chrome/Edge/Safari) */
+#inventorySummary::-webkit-scrollbar {
+  width: 8px;
+}
+#inventorySummary::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 6px;
+}
+#inventorySummary::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+.summary-section {
+  max-height: 550px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 12px;
+  background: #fff;
+}
+
+
+
+
