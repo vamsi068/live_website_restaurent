@@ -59,6 +59,12 @@
         <label>Others Expenses (Monthly):
           <input type="number" id="salaryMonthlyInput" min="0" />
         </label>
+        
+        <label>Used Amount (From Salary):
+         <input type="number" id="usedSalaryInput" min="0" />
+        </label>
+
+
 
         <button id="saveExpenses" class="btn primary">Save Expenses</button>
 
@@ -176,6 +182,21 @@
           <p>₹<span id="filteredDailyAvg">0</span></p>
         </div>
 
+        <div class="summary-card orange">
+          <h4>Weekly Salary Balance</h4>
+          <p>₹<span id="weeklyBalance">0</span></p>
+        </div>
+
+        <div class="summary-card purple">
+          <h4>Today's Purchase (Filtered)</h4>
+          <p>₹<span id="filteredTodayPurchase">0</span></p>
+        </div>
+
+        <div class="summary-card purple">
+          <h4>Daily Average Purchase (Filtered)</h4>
+          <p>₹<span id="filteredDailyAvgPurchase">0</span></p>
+        </div>
+
       </div>
     </section>
 
@@ -252,5 +273,3 @@
 </body>
 
 </html>
-
-
