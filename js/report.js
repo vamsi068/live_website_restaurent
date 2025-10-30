@@ -24,12 +24,16 @@ document.addEventListener("DOMContentLoaded", () => {
   expenses.rentPerMonth = expenses.rentPerMonth ?? 0;
   expenses.powerPerMonth = expenses.powerPerMonth ?? 0;
   expenses.othersPerMonth = expenses.othersPerMonth ?? 0;
+  expenses.usedSalary = expenses.usedSalary ?? 0;
+  expenses.lastWeekReset = expenses.lastWeekReset ?? "";
 
   // Fill input fields safely
   const salaryInput = document.getElementById("salaryInput");
   const rentInput = document.getElementById("rentInput");
   const powerInput = document.getElementById("powerInput");
   const othersInput = document.getElementById("salaryMonthlyInput");
+  const usedSalaryInput = document.getElementById("usedSalaryInput");
+  if (usedSalaryInput) usedSalaryInput.value = expenses.usedSalary;
 
   if (salaryInput) salaryInput.value = expenses.salaryPerDay;
   if (rentInput) rentInput.value = expenses.rentPerMonth;
@@ -44,6 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
       expenses.rentPerMonth = parseInt(rentInput.value) || 0;
       expenses.powerPerMonth = parseInt(powerInput.value) || 0;
       expenses.othersPerMonth = parseInt(othersInput.value) || 0;
+      expenses.usedSalary = parseInt(usedSalaryInput.value) || 0;
       localStorage.setItem("expenses", JSON.stringify(expenses));
       location.reload();
     });
@@ -55,6 +60,27 @@ document.addEventListener("DOMContentLoaded", () => {
   const dailyPower = Math.round(expenses.powerPerMonth / 30);
   const dailyOther = Math.round(expenses.othersPerMonth / 30);
   const totalExpenses = dailySalary + dailyRent + dailyPower + dailyOther;
+
+  // =====================
+  // Weekly Salary & Balance
+  // =====================
+  let weeklySalaryBudget = dailySalary * 7;
+  let usedFromSalary = expenses.usedSalary || 0;
+  let balance = weeklySalaryBudget - usedFromSalary;
+  if (balance < 0) balance = 0;
+
+  // =====================
+  // Weekly Salary Reset (Sunday)
+  // =====================
+  const dayOfWeek = today.getDay(); // 0 = Sunday
+  const lastReset = new Date(expenses.lastWeekReset || "1970-01-01");
+  const daysSinceReset = Math.floor((today - lastReset) / (1000 * 60 * 60 * 24));
+
+  if (dayOfWeek === 0 && daysSinceReset >= 7) {
+    expenses.usedSalary = 0;
+    expenses.lastWeekReset = todayStr;
+    localStorage.setItem("expenses", JSON.stringify(expenses));
+  }
 
   // =====================
   // Helper Functions
@@ -69,7 +95,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (isNaN(orderDate)) return;
       const orderDateStr = orderDate.toISOString().split("T")[0];
 
-      // Today's sales
       if (orderDateStr === todayStr) {
         todayTotal += order.total;
         order.items.forEach(i => {
@@ -77,13 +102,11 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
 
-      // This month
       if (orderDate.getMonth() === thisMonth && orderDate.getFullYear() === thisYear) {
         monthTotal += order.total;
         monthTransactions++;
       }
 
-      // Last month
       if (orderDate.getMonth() === lastMonth && orderDate.getFullYear() === lastMonthYear) {
         lastMonthTotal += order.total;
         lastMonthTransactions++;
@@ -122,7 +145,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const orderStats = getOrdersTotals(orders);
   const purchaseStats = getPurchasesTotals(purchases);
 
-  const todayProfitLoss = orderStats.todayTotal - (purchaseStats.todayPurchaseTotal + totalExpenses);
+  let todayProfitLoss;
+  if (balance > 0) {
+    todayProfitLoss = orderStats.todayTotal - (purchaseStats.todayPurchaseTotal + totalExpenses);
+  } else {
+    const overspend = usedFromSalary - weeklySalaryBudget;
+    todayProfitLoss = orderStats.todayTotal - (purchaseStats.todayPurchaseTotal + totalExpenses + overspend);
+  }
 
   // =====================
   // Update UI
@@ -147,6 +176,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setText("rentExpense", dailyRent);
   setText("powerExpense", dailyPower);
   setText("otherExpense", dailyOther);
+  setText("weeklyBalance", balance.toFixed(2));
 
   const plEl = document.getElementById("todayProfitLoss");
   if (plEl) {
@@ -205,7 +235,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // =====================
-  // Filter Function
+  // Filter Function (with Purchases)
   // =====================
   function applyFilters() {
     const startDate = document.getElementById("startDate")?.value ? new Date(document.getElementById("startDate").value) : null;
@@ -237,10 +267,36 @@ document.addEventListener("DOMContentLoaded", () => {
     const daysWithSales = new Set(filteredOrders.map(o => new Date(o.date).toISOString().split("T")[0]));
     const dailyAvg = daysWithSales.size ? totalSales / daysWithSales.size : 0;
 
+    // ==== Filter Purchases (for same date range) ====
+    const filteredPurchases = purchases.filter(p => {
+      const d = new Date(p.date);
+      if (isNaN(d)) return false;
+      if (startDate && d < startDate) return false;
+      if (endDate && d > endDate) return false;
+      return true;
+    });
+
+    let todayFilteredPurchase = 0;
+    let totalFilteredPurchase = 0;
+
+    filteredPurchases.forEach(p => {
+      const pDate = new Date(p.date);
+      const pStr = pDate.toISOString().split("T")[0];
+      if (pStr === todayStr) todayFilteredPurchase += p.qty * p.price;
+      totalFilteredPurchase += p.qty * p.price;
+    });
+
+    const daysWithPurchase = new Set(filteredPurchases.map(p => new Date(p.date).toISOString().split("T")[0]));
+    const dailyAvgPurchase = daysWithPurchase.size ? totalFilteredPurchase / daysWithPurchase.size : 0;
+
+    // ==== Update UI ====
     setText("filteredSales", totalSales);
     setText("filteredTransactions", totalTransactions);
     setText("filteredDailyAvg", dailyAvg.toFixed(2));
+    setText("filteredTodayPurchase", todayFilteredPurchase.toFixed(2));
+    setText("filteredDailyAvgPurchase", dailyAvgPurchase.toFixed(2));
 
+    // ==== Update Charts ====
     const labels = Object.keys(salesByItem).length ? Object.keys(salesByItem) : ["No Data"];
     salesChart.data.labels = labels;
     salesChart.data.datasets[0].data = labels.map(k => salesByItem[k] || 0);
@@ -331,7 +387,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function toggleTrend(chart, type, n, btnActiveId, btnInactiveId) {
     const { labels, data } = n <= 31
       ? getLastNDaysSalesItems(n, type)
-      : getLastNMonthsSalesItems(n / 5, type); // approx
+      : getLastNMonthsSalesItems(n / 5, type);
     chart.data.labels = labels;
     chart.data.datasets[0].data = data;
     chart.update();
@@ -345,7 +401,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn7dItems")?.addEventListener("click", () => toggleTrend(trendItemsChart, "items", 7, "btn7dItems", "btn6mItems"));
   document.getElementById("btn6mItems")?.addEventListener("click", () => toggleTrend(trendItemsChart, "items", 30, "btn6mItems", "btn7dItems"));
 
-  // Default load
   toggleTrend(trendChart, "sales", 7, "btn7d", "btn6m");
   toggleTrend(trendItemsChart, "items", 7, "btn7dItems", "btn6mItems");
 
