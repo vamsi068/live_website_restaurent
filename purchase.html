@@ -56,6 +56,15 @@
     <label for="filterDate">Filter by Date:</label>
     <input type="date" id="filterDate"/>
     <button id="clearFilterBtn">Clear</button>
+
+    <!-- 🔹 New: Month Selector -->
+    <label for="filterMonth">Month:</label>
+    <select id="filterMonth">
+    <option value="current">This Month</option>
+    <option value="last">Last Month</option>
+    <option value="all">All Months</option>
+    </select>
+
   </div>
 
   <!-- All Purchase Records -->
@@ -86,6 +95,12 @@
     <h4>Products Purchase Overview</h4>
     <canvas id="productChart"></canvas>
   </div>
+
+  <!-- 🆕 Day-wise Purchase Chart -->
+ <div class="chart-card">
+    <h4>Day-wise Purchase Trend</h4>
+    <canvas id="dailyPurchaseChart"></canvas>
+  </div
 
   <!-- Purchases Overview (Chart) -->
   <div class="chart-card">
@@ -118,6 +133,4 @@
 <script src="js/purchase.js"></script>
 </body>
 </html>
-
-
 
