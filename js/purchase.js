@@ -528,18 +528,43 @@ function renderAll() {
 
 function openEditModal(productName) {
   const currentImg = images[productName] || "https://via.placeholder.com/100?text=No+Image";
+  const currentData = inventory[productName] || { unit: "pcs", category: "Uncategorized" };
 
   const modal = document.createElement("div");
   modal.className = "edit-modal-overlay";
   modal.innerHTML = `
     <div class="edit-modal">
       <h4>Edit Product</h4>
+
       <div class="preview-wrapper">
         <img src="${currentImg}" alt="Preview" id="previewImage">
       </div>
+
+      <label>Name:</label>
       <input type="text" class="edit-name" value="${productName}" placeholder="New name"/>
+
+      <label>Category:</label>
+      <select class="edit-category">
+        <option value="Vegetables" ${currentData.category === "Vegetables" ? "selected" : ""}>Vegetables</option>
+        <option value="Grocery" ${currentData.category === "Grocery" ? "selected" : ""}>Grocery</option>
+        <option value="Meat" ${currentData.category === "Meat" ? "selected" : ""}>Meat</option>
+        <option value="Dairy" ${currentData.category === "Dairy" ? "selected" : ""}>Dairy</option>
+        <option value="Beverages" ${currentData.category === "Beverages" ? "selected" : ""}>Beverages</option>
+        <option value="Uncategorized" ${!currentData.category || currentData.category === "Uncategorized" ? "selected" : ""}>Uncategorized</option>
+      </select>
+
+      <label>Unit:</label>
+      <select class="edit-unit">
+        <option value="pcs" ${currentData.unit === "pcs" ? "selected" : ""}>Pieces</option>
+        <option value="kg" ${currentData.unit === "kg" ? "selected" : ""}>Kg</option>
+        <option value="grm" ${currentData.unit === "grm" ? "selected" : ""}>Grams</option>
+        <option value="liters" ${currentData.unit === "liters" ? "selected" : ""}>Liters</option>
+      </select>
+
+      <label>Change Image:</label>
       <input type="file" accept="image/*" class="edit-img"/>
-      <div>
+
+      <div class="edit-actions">
         <button class="save-edit">Save</button>
         <button class="cancel-edit">Cancel</button>
       </div>
@@ -548,7 +573,7 @@ function openEditModal(productName) {
   document.body.appendChild(modal);
   setTimeout(() => modal.classList.add("show"), 10);
 
-  // Live preview
+  // Live image preview
   modal.querySelector(".edit-img").addEventListener("change", e => {
     const file = e.target.files[0];
     if (file) {
@@ -558,34 +583,43 @@ function openEditModal(productName) {
     }
   });
 
-  // Save
+  // Save changes
   modal.querySelector(".save-edit").addEventListener("click", () => {
     const newName = modal.querySelector(".edit-name").value.trim();
+    const newCategory = modal.querySelector(".edit-category").value;
+    const newUnit = modal.querySelector(".edit-unit").value;
     const imgFile = modal.querySelector(".edit-img").files[0];
 
     if (!newName) return alert("Enter a valid name");
     if (newName !== productName && inventory[newName]) return alert("Product already exists!");
 
-    if (newName !== productName) {
-      inventory[newName] = inventory[productName];
-      delete inventory[productName];
-      purchases = purchases.map(p => p.item === productName ? { ...p, item: newName } : p);
-      if (images[productName]) {
-        images[newName] = images[productName];
-        delete images[productName];
-      }
-    }
+    // ✅ Update inventory entry
+    const newData = { ...inventory[productName], category: newCategory, unit: newUnit };
+    delete inventory[productName];
+    inventory[newName] = newData;
 
+    // ✅ Update purchases to match new name/category/unit
+    purchases = purchases.map(p =>
+      p.item === productName ? { ...p, item: newName, category: newCategory, unit: newUnit } : p
+    );
+
+    // ✅ Update image if new one selected
     if (imgFile) {
       const reader = new FileReader();
       reader.onload = () => {
         images[newName] = reader.result;
+        if (images[productName]) delete images[productName];
         saveData();
         closeModal();
         renderAll();
       };
       reader.readAsDataURL(imgFile);
     } else {
+      // Keep existing image
+      if (images[productName] && newName !== productName) {
+        images[newName] = images[productName];
+        delete images[productName];
+      }
       saveData();
       closeModal();
       renderAll();
@@ -597,8 +631,11 @@ function openEditModal(productName) {
     setTimeout(() => modal.remove(), 250);
   };
   modal.querySelector(".cancel-edit").addEventListener("click", closeModal);
-  modal.addEventListener("click", e => { if (e.target.classList.contains("edit-modal-overlay")) closeModal(); });
-}  
+  modal.addEventListener("click", e => {
+    if (e.target.classList.contains("edit-modal-overlay")) closeModal();
+  });
+}
+  
 
 let dailyPurchaseChart = null;
 
