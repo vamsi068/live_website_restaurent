@@ -308,8 +308,9 @@ if (inventory[product]) {
   if (!inventory[product]) {
     inventory[product] = { qty: 0, unit, category: "Uncategorized" };
   }
+  const category = inventory[product].category || "Uncategorized";
   inventory[product].qty += qty;
-  purchases.push({ item: product, qty, price, date, unit });
+  purchases.push({ item: product, qty, price, date, unit, category });
 } else {
   // Editing an existing purchase
   const old = purchases[editIndex];
@@ -320,9 +321,11 @@ if (inventory[product]) {
   if (!inventory[product]) {
     inventory[product] = { qty: 0, unit, category: "Uncategorized" };
   }
+  const category = inventory[product].category || "Uncategorized";
   inventory[product].qty += qty;
-  purchases[editIndex] = { item: product, qty, price, date, unit };
+  purchases[editIndex] = { item: product, qty, price, date, unit, category };
 }
+
 
 
   saveData();
