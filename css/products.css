@@ -1,0 +1,54 @@
+/* Page Header */
+.page-header {
+  background-color: #f8f9fa;
+  padding: 60px 0;
+  margin-bottom: 40px;
+}
+
+.page-header h1 {
+  font-weight: 700;
+  color: #333;
+}
+
+.page-header p {
+  color: #666;
+  font-size: 1.1rem;
+}
+
+/* Table Section */
+.products-section {
+  padding: 40px 0;
+}
+
+.table {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.table thead th {
+  background-color: #212529 !important;
+  color: white;
+}
+
+.table tfoot th {
+  background-color: #212529 !important;
+  color: white;
+  font-size: 1.1rem;
+}
+
+.table-secondary {
+  background-color: #f0f0f0 !important;
+}
+
+.table-light {
+  background-color: #fafafa !important;
+  font-style: italic;
+}
+
+
+/* Footer */
+.footer {
+  background-color: #212529;
+  color: white;
+  padding: 20px 0;
+}
