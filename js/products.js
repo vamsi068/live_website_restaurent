@@ -151,6 +151,7 @@ function renderProductsTable(filteredList) {
         price: p.price,
         totalValue: p.qty * p.price,
         date: p.date,
+       unit: p.unit || "", // 🆕 add unit (kg, g, L, pcs, etc.)
       });
     }
   });
@@ -185,7 +186,7 @@ function renderProductsTable(filteredList) {
           <td>${rowCount}</td>
           <td>${item.name}</td>
           <td>${category}</td>
-          <td>${item.qty}</td>
+          <td>${item.qty} ${item.unit || ""}</td>
           <td>₹${item.price.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
           <td>₹${item.totalValue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
           <td>${dateStr}</td>
