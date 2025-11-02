@@ -22,7 +22,7 @@
         <li><a href="orders.html" class="active" aria-current="page">Orders</a></li>
         <a href="customers.html" class="nav-btn">Customer Rewards</a>
         <li><a href="purchase.html">Purchase</a></li>
-        <a href="products.html" class="text-white fw-bold text-decoration-underline">Products</a>
+        <li><a href="products.html" class="text-white fw-bold text-decoration-underline">Products</a></li>
         <li><a href="report.html">Reports</a></li>
       </ul>
     </nav>
@@ -79,6 +79,16 @@
           <option value="10" selected>10</option>
           <option value="20">20</option>
         </select>
+
+        <label for="orderDate">Filter by Date:</label>
+        <input type="date" id="orderDate" aria-label="Filter by date"/>
+
+        <label for="monthFilter">Filter by Month:</label>
+        <input type="month" id="monthFilter" aria-label="Filter by month"/>
+
+        <label for="searchText" class="sr-only">Search orders</label>
+        <input type="text" id="searchText" placeholder="Search by item, id, customer or date..." aria-label="Search orders"/>
+
 
         <button id="clearFilter" class="gray-btn">Clear Filter</button>
         <button id="deleteAllBtn" class="red-btn">Delete All Orders</button>
@@ -151,6 +161,3 @@
   </dialog>
 </body>
 </html>
-
-
-
