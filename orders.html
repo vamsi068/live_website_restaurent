@@ -20,7 +20,7 @@
         <li><a href="index.html">Home</a></li>
         <li><a href="menu.html">Menu</a></li>
         <li><a href="orders.html" class="active" aria-current="page">Orders</a></li>
-        <a href="customers.html" class="nav-btn">Customer Rewards</a>
+        <li><a href="customers.html" class="nav-btn">Customer Rewards</a></li>
         <li><a href="purchase.html">Purchase</a></li>
         <li><a href="products.html" class="text-white fw-bold text-decoration-underline">Products</a></li>
         <li><a href="report.html">Reports</a></li>
@@ -62,6 +62,9 @@
         <label for="orderDate">Filter by Date:</label>
         <input type="date" id="orderDate" aria-label="Filter by date"/>
 
+        <label for="monthFilter">Filter by Month:</label>
+        <input type="month" id="monthFilter" aria-label="Filter by month"/>
+
         <label for="searchText" class="sr-only">Search orders</label>
         <input type="text" id="searchText" placeholder="Search by item, id, customer or date..." aria-label="Search orders"/>
 
@@ -80,19 +83,8 @@
           <option value="20">20</option>
         </select>
 
-        <label for="orderDate">Filter by Date:</label>
-        <input type="date" id="orderDate" aria-label="Filter by date"/>
-
-        <label for="monthFilter">Filter by Month:</label>
-        <input type="month" id="monthFilter" aria-label="Filter by month"/>
-
-        <label for="searchText" class="sr-only">Search orders</label>
-        <input type="text" id="searchText" placeholder="Search by item, id, customer or date..." aria-label="Search orders"/>
-
-
         <button id="clearFilter" class="gray-btn">Clear Filter</button>
         <button id="deleteAllBtn" class="red-btn">Delete All Orders</button>
-
       </div>
 
       <div class="action-bar">
@@ -129,27 +121,7 @@
         <input type="date" id="orderDateEdit" placeholder="Order Date" />
       </div>
 
-      <div id="itemsContainer">
-        <!-- Example item (added dynamically by JS) -->
-        <!-- Each item block should include variant dropdown -->
-        <!-- Template for reference -->
-        <!--
-        <div class="item-row">
-          <input type="text" class="item-name" placeholder="Item Name" value="Burger" />
-          <select class="variant-select">
-            <option value="">Select Variant</option>
-            <option value="1">1</option>
-            <option value="1/2">1/2</option>
-            <option value="2/3">2/3</option>
-            <option value="3/4">3/4</option>
-            <option value="1/4">1/4</option>
-          </select>
-          <input type="number" class="item-qty" placeholder="Qty" value="1" />
-          <input type="number" class="item-price" placeholder="Price" value="120" />
-          <button type="button" class="remove-item-btn">✕</button>
-        </div>
-        -->
-      </div>
+      <div id="itemsContainer"></div>
 
       <button type="button" id="addItemBtn">+ Add Item</button>
       <p class="total-display">Total: ₹<span id="modalTotal">0</span></p>
