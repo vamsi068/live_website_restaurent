@@ -10,6 +10,9 @@ let sortMode = "newest";
 let pageSize = 10;
 let currentPage = 1;
 let editIndex = -1;
+let customers = JSON.parse(localStorage.getItem("customers")) || [];
+let filterMonth = "";
+
 
 /* ========= DOM ELEMENTS (deferred script ensures DOM exists) ========= */
 const ordersListEl = document.getElementById("ordersList");
@@ -82,6 +85,17 @@ function getFilteredOrdersList() {
   if (filterDate) {
     list = list.filter(o => toLocalISODate(o.date) === filterDate);
   }
+
+  if (filterMonth) {
+  list = list.filter(o => {
+    const dateKey = toLocalISODate(o.date);
+    const monthKey = dateKey.slice(0, 7); // "YYYY-MM"
+    return monthKey === filterMonth;
+  });
+}
+
+
+
 
   if (searchText && searchText.trim() !== "") {
     const q = searchText.trim().toLowerCase();
@@ -561,20 +575,42 @@ function attachEvents() {
   }
 });
 
+const monthFilterEl = document.getElementById("monthFilter");
+monthFilterEl?.addEventListener("change", e => {
+  let val = e.target.value.trim();
+  if (val.length === 7) filterMonth = val;
+  else if (val.length >= 10) filterMonth = val.slice(0, 7);
+  else filterMonth = "";
+
+  
+  filterDate = "";
+  currentPage = 1;
+  renderOrders();
+  displayBestSaleItem();
+  displayTodaysSoldItems();
+});
+
+
+
+
+
 
   document.getElementById("addItemBtn")?.addEventListener("click", () => addItemRow());
 
   // ✅ Clear Filter button now resets filters only
   clearFilterBtn?.addEventListener("click", () => {
   filterDate = "";
+  filterMonth = "";
   searchText = "";
   sortMode = "newest";
   orderDateEl.value = "";
+  monthFilterEl.value = "";
   searchTextEl.value = "";
   sortSelect.value = "newest";
   currentPage = 1;
   renderOrders();
-  displayBestSaleItem(); // ✅ add this
+  displayBestSaleItem();
+  displayTodaysSoldItems();// ✅ add this
 });
 
 
@@ -685,12 +721,27 @@ function downloadBillPDF(index) {
 /* ========= BEST SALE ITEM (RESPECTS FILTER DATE) ========= */
 function displayBestSaleItem() {
   const ordersLocal = JSON.parse(localStorage.getItem("orders")) || [];
-  const dateKey = filterDate || getLocalDateKey(new Date());
+  let dateKey = filterDate || getLocalDateKey(new Date());
+  let isMonthMode = false;
+
+  if (filterMonth) {
+    isMonthMode = true;
+    dateKey = filterMonth; // "YYYY-MM"
+  }
+
 
   const filteredOrders = ordersLocal.filter(o => {
     const orderDate = getLocalDateKey(o.date);
+    if (isMonthMode) {
+      const monthKey = orderDate.slice(0, 7);
+      return monthKey === dateKey;
+    }
+
     return orderDate === dateKey && Array.isArray(o.items);
   });
+
+  
+
 
   const soldItems = {};
   filteredOrders.forEach(order => {
@@ -815,32 +866,32 @@ function updateModalTotal() {
 
 
 function updateCustomerData(order) {
-  let existingCustomer = customers.find(c => c.number === order.number);
-
-  if (existingCustomer) {
-    existingCustomer.totalOrders += 1;
-    existingCustomer.totalAmount += parseFloat(order.total);
-    existingCustomer.rewardPoints = existingCustomer.totalOrders;
-    existingCustomer.freeMealEligible = existingCustomer.totalOrders >= 10;
-  } else {
-    customers.push({
-      name: order.name,
-      number: order.number,
-      totalOrders: 1,
-      totalAmount: parseFloat(order.total),
-      rewardPoints: 1,
-      freeMealEligible: false,
-    });
-  }
-
-  localStorage.setItem("customers", JSON.stringify(customers));
+  let existingCustomer = customers.find(c => c.number === order.customerNumber);
+if (existingCustomer) {
+  existingCustomer.totalOrders += 1;
+  existingCustomer.totalAmount += parseFloat(order.total);
+  existingCustomer.rewardPoints = existingCustomer.totalOrders;
+  existingCustomer.freeMealEligible = existingCustomer.totalOrders >= 10;
+} else {
+  customers.push({
+    name: order.customerName,
+    number: order.customerNumber,
+    totalOrders: 1,
+    totalAmount: parseFloat(order.total),
+    rewardPoints: 1,
+    freeMealEligible: false,
+  });
 }
+localStorage.setItem("customers", JSON.stringify(customers));
+
+}
+
 
 /* ========= INITIALIZE ON PAGE LOAD ========= */
 document.addEventListener("DOMContentLoaded", () => {
-  ensureOrderIds();     // make sure all have valid IDs
   renderOrders();       // display saved orders
   attachEvents();       // attach all click/search/filter events
   displayBestSaleItem();// show today's best sale
   displayTodaysSoldItems(); // show today's sold items
+  saveOrders();
 });
