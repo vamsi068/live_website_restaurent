@@ -22,8 +22,8 @@
         <li><a href="orders.html" class="hover:underline">Orders</a></li>
         <li><a href="customers.html" class="font-semibold underline">Customer Rewards</a></li>
         <li><a href="purchase.html" class="hover:underline">Purchase</a></li>
-        <a href="products.html" class="text-white fw-bold text-decoration-underline">Products</a>
-        <li><a href="report.html" class="hover:underline">Reports</a></li>
+        <li><a href="products.html" class="text-white fw-bold text-decoration-underline">Products</a></li>
+        <li><a href="report.html" class="hover:underline">Reports</a></li> 
       </ul>
     </nav>
   </header>
@@ -51,13 +51,25 @@
     </div>
 
     <!-- ===== Search & Filter Section ===== -->
-    <div class="flex flex-col sm:flex-row justify-between mb-4 gap-4 items-center">
+    <div class="flex flex-col sm:flex-row justify-between mb-4 gap-4 items-center flex-wrap">
+
+      <!-- 🔹 Month Filter -->
+      <input 
+        type="month" 
+        id="monthFilter" 
+        class="border rounded-lg p-2 focus:ring-2 focus:ring-blue-400 outline-none"
+        title="Filter customers by month"
+      >
+
+      <!-- 🔹 Search Box -->
       <input 
         type="text" 
         id="searchInput" 
         placeholder="🔍 Search by name or mobile number..." 
         class="w-full sm:w-1/2 border rounded-lg p-2 focus:ring-2 focus:ring-blue-400 outline-none"
       >
+
+      <!-- 🔹 Type Filter -->
       <select 
         id="filterType" 
         class="w-full sm:w-1/4 border rounded-lg p-2 focus:ring-2 focus:ring-blue-400 outline-none"
@@ -67,6 +79,14 @@
         <option value="repeat">Repeat Customers</option>
         <option value="wrong">Wrong Numbers</option>
       </select>
+
+      <!-- 🔹 Clear Filters Button -->
+      <button 
+        id="clearFiltersBtn" 
+        class="bg-gray-300 hover:bg-gray-400 text-black px-3 py-2 rounded-lg"
+      >
+        Clear Filters
+      </button>
     </div>
 
     <!-- ===== CUSTOMER STATS SECTION ===== -->
@@ -82,6 +102,14 @@
       </div>
       <div class="stats-card wrong bg-red-100 text-red-700 p-3 rounded-lg shadow text-center font-semibold">
         ⚠️ Wrong Numbers: <span id="wrongNumbersCount">0</span>
+      </div>
+    </section>
+
+    <!-- ===== BEST CUSTOMERS OF THE MONTH ===== -->
+    <section id="bestCustomerSection" class="bg-yellow-50 border border-yellow-200 rounded-xl shadow p-4 mb-6">
+      <h3 class="text-2xl font-semibold text-yellow-800 mb-3">🏆 Top 2 Customers of the Month</h3>
+      <div id="bestCustomerDetails" class="grid sm:grid-cols-2 gap-4 text-center text-lg text-gray-700">
+        Loading top customers...
       </div>
     </section>
 
@@ -106,7 +134,7 @@
       </table>
     </div>
 
-    <!-- ✅ PAGINATION CONTAINER ADDED HERE -->
+    <!-- ✅ PAGINATION CONTAINER -->
     <div id="paginationContainer" class="flex justify-center mb-8"></div>
 
     <!-- ===== Add/Edit Customer Modal ===== -->
@@ -161,7 +189,6 @@
 
   <!-- ===== JS Scripts ===== -->
   <script src="js/customers.js"></script>
-  <script src="js/customers-enhanced.js"></script>
 
 </body>
 </html>
