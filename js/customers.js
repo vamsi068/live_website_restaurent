@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', function () {
   let customers = JSON.parse(localStorage.getItem("customers")) || [];
   let editIndex = -1;
   let undoStack = [];
+  let filterMonth = "";
+
 
   // ========= DOM ELEMENTS =========
   const customersList = document.getElementById("customersList");
@@ -128,6 +130,60 @@ document.addEventListener('DOMContentLoaded', function () {
     if (wrongCustEl) wrongCustEl.textContent = wrongC;
   }
 
+  function renderBestCustomer() {
+  const section = document.getElementById("bestCustomerDetails");
+  if (!section) return;
+
+  const orders = JSON.parse(localStorage.getItem("orders")) || [];
+  if (orders.length === 0) {
+    section.innerHTML = `<p class="text-gray-500 italic">No orders found this month.</p>`;
+    return;
+  }
+
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  // Filter only current month’s orders
+  const monthlyOrders = orders.filter(order => {
+    const date = new Date(order.date || order.createdAt || order.orderDate);
+    return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+  });
+
+  if (monthlyOrders.length === 0) {
+    section.innerHTML = `<p class="text-gray-500 italic">No customers have placed orders this month.</p>`;
+    return;
+  }
+
+  // Aggregate spending per customer
+  const spendingMap = {};
+  monthlyOrders.forEach(order => {
+    const phone = order.customerMobile?.trim();
+    const name = order.customerName?.trim() || "Unknown";
+    const total = parseFloat(order.total || 0);
+    if (!phone) return;
+    if (!spendingMap[phone]) spendingMap[phone] = { name, phone, amount: 0 };
+    spendingMap[phone].amount += total;
+  });
+
+  // Find top spender
+  const best = Object.values(spendingMap).sort((a, b) => b.amount - a.amount)[0];
+  if (!best) {
+    section.innerHTML = `<p class="text-gray-500 italic">No best customer found this month.</p>`;
+    return;
+  }
+
+  section.innerHTML = `
+    <div class="bg-yellow-100 border border-yellow-300 rounded-lg p-4 inline-block shadow-md">
+      <p class="text-2xl font-bold text-yellow-800">${best.name}</p>
+      <p class="text-gray-700">📞 ${best.phone}</p>
+      <p class="text-xl text-green-700 font-semibold">💰 ₹${best.amount.toFixed(2)} Spent</p>
+      <p class="text-sm text-gray-600 mt-1">Month: ${now.toLocaleString("default", { month: "long", year: "numeric" })}</p>
+    </div>
+  `;
+}
+
+
   function renderWrongNumbers() {
     const list = document.getElementById("wrongNumbersList");
     if (!list) return;
@@ -148,6 +204,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function renderCustomers(filtered = customers) {
   const type = filterType?.value || "all";
+  // 🔹 Filter by Month (based on orders)
+  if (filterMonth) {
+    const orders = JSON.parse(localStorage.getItem("orders")) || [];
+    const filteredPhones = new Set();
+
+    orders.forEach(o => {
+      const date = new Date(o.date || o.createdAt || o.orderDate);
+      if (!isNaN(date)) {
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+        if (monthKey === filterMonth) {
+          if (o.customerMobile) filteredPhones.add(o.customerMobile.trim());
+        }
+      }
+    });
+
+    filtered = filtered.filter(c => filteredPhones.has(c.phone));
+  }
+
   if (type === "new") filtered = filtered.filter(c => c.totalOrders === 1);
   else if (type === "repeat") filtered = filtered.filter(c => c.totalOrders > 1);
   else if (type === "wrong") filtered = filtered.filter(c => !/^\d{10}$/.test(c.phone));
@@ -392,6 +466,19 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   filterType?.addEventListener("change", () => renderCustomers());
+
+  // ========= MONTH FILTER =========
+  const monthFilterEl = document.getElementById("monthFilter");
+  monthFilterEl?.addEventListener("change", e => {
+    let val = e.target.value.trim();
+    if (val.length === 7) filterMonth = val;              // "YYYY-MM"
+    else if (val.length >= 10) filterMonth = val.slice(0, 7); // "YYYY-MM-DD" → "YYYY-MM"
+    else filterMonth = "";
+
+    currentPage = 1;
+    renderCustomers();
+    renderBestCustomer();
+  });
 
   // ========= CHART =========
   let chartInstance = null;
