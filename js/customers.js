@@ -554,8 +554,135 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
 
+  
+
+
+
+
   // ========= INITIALIZE =========
   syncFromOrders();
   renderCustomers();
 
 });
+
+// ========= CUSTOMER ORDER POPUP =========
+const body = document.body;
+let popup = null;
+
+function showCustomerPopup(customerPhone, x, y) {
+  const orders = JSON.parse(localStorage.getItem("orders")) || [];
+  const custOrders = orders.filter(o => o.customerMobile?.trim() === customerPhone);
+
+  if (custOrders.length === 0) {
+    hidePopup();
+    return;
+  }
+
+  hidePopup(); // Remove any existing popup
+
+  // ===== Find Most Repeated Item =====
+  const itemFrequency = {};
+  custOrders.forEach(o => {
+    if (Array.isArray(o.items)) {
+      o.items.forEach(i => {
+        const name = i.name?.trim() || "Unknown Item";
+        itemFrequency[name] = (itemFrequency[name] || 0) + (parseInt(i.qty) || 1);
+      });
+    }
+  });
+
+  let mostRepeatItem = null;
+  if (Object.keys(itemFrequency).length > 0) {
+    mostRepeatItem = Object.entries(itemFrequency)
+      .sort((a, b) => b[1] - a[1])[0]; // [itemName, count]
+  }
+
+  // ===== Create Popup =====
+  popup = document.createElement("div");
+  popup.className = `
+    fixed bg-white border border-gray-300 rounded-xl shadow-xl p-6 
+    max-w-md max-h-[70vh] overflow-y-auto z-50 transition-all duration-200
+  `;
+
+  // ✅ Always center popup on screen
+  popup.style.position = "fixed";
+  popup.style.top = "50%";
+  popup.style.left = "50%";
+  popup.style.transform = "translate(-50%, -50%)";
+  popup.style.width = window.innerWidth < 600 ? "90%" : "500px";
+  popup.style.maxWidth = "95vw";
+  popup.style.zIndex = "9999";
+
+  // ===== Inner HTML =====
+  popup.innerHTML = `
+    <div class="flex justify-between items-center mb-3">
+      <h3 class="text-lg font-bold text-blue-700 flex items-center gap-2">
+        🛍 Purchase History
+      </h3>
+      <button id="closePopupBtn" class="text-gray-500 hover:text-red-500 text-xl font-bold">&times;</button>
+    </div>
+
+    ${
+      mostRepeatItem
+        ? `<div class="mb-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
+             <p class="font-semibold text-yellow-800">⭐ Most Repeated Item:</p>
+             <p class="text-gray-800">${mostRepeatItem[0]} 
+               <span class="text-sm text-gray-600">(×${mostRepeatItem[1]})</span>
+             </p>
+           </div>`
+        : `<p class="text-gray-500 italic mb-4">No item repetition data available.</p>`
+    }
+
+    <ul class="space-y-3">
+      ${custOrders.map(o => `
+        <li class="border-b pb-2">
+          <p><strong>Date:</strong> ${new Date(o.date || o.createdAt || o.orderDate).toLocaleDateString()}</p>
+          <p><strong>Items:</strong> ${
+            Array.isArray(o.items)
+              ? o.items.map(i => `${i.name} (x${i.qty})`).join(", ")
+              : (o.items || "—")
+          }</p>
+          <p><strong>Total:</strong> ₹${parseFloat(o.total || 0).toFixed(2)}</p>
+        </li>
+      `).join("")}
+    </ul>
+  `;
+
+  document.body.appendChild(popup);
+
+  // ✅ Close button inside popup
+  document.getElementById("closePopupBtn").addEventListener("click", hidePopup);
+}
+
+
+function hidePopup() {
+  if (popup) popup.remove();
+  const overlay = document.getElementById("popupOverlay");
+  if (overlay) overlay.remove();
+  popup = null;
+}
+
+
+// ✅ Attach click on table rows
+customersList.addEventListener("click", function (e) {
+  const row = e.target.closest("tr[data-phone]");
+  if (!row) return;
+
+  const phone = row.dataset.phone;
+  const rect = row.getBoundingClientRect();
+  const x = rect.right + 10;
+  const y = rect.top + window.scrollY + 10;
+
+  showCustomerPopup(phone, x, y);
+  e.stopPropagation();
+});
+
+// ✅ Hide popup on outside click
+document.addEventListener("click", function (e) {
+  if (popup && !popup.contains(e.target)) {
+    hidePopup();
+  }
+});
+
+
+
