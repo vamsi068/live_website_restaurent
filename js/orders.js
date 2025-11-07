@@ -804,8 +804,9 @@ function sendWhatsAppBill(order) {
   let rewardPoints = 0;
   let redeemed = 0;
 
+  // ✅ FIXED: don't auto-increment totalOrders
   if (customerData) {
-    totalOrders = (customerData.totalOrders || 0) + 1;
+    totalOrders = customerData.totalOrders || 1;
     redeemed = customerData.redeemed || 0;
   } else {
     totalOrders = 1;
@@ -814,7 +815,6 @@ function sendWhatsAppBill(order) {
   const totalEarned = Math.floor(totalOrders / 10);
   rewardPoints = Math.max(0, totalEarned - redeemed);
 
-  // ✅ WhatsApp Message
   let message = `*Street Magic Bill*\nTangellamudivari Street, Gurunanak Colony, Vijayawada - 520007\n\n`;
 
   message += `Order #${order.id}\n`;
@@ -829,19 +829,13 @@ function sendWhatsAppBill(order) {
   message += `*Total Orders:* ${totalOrders}\n`;
   message += `*Reward Points:* ${rewardPoints}\n\n`;
 
-  // ✅ Added your new branch line below existing offer message
-  
   message += `_Complete 10 orders and you’ll get 1 reward point = 1 free meal_\n\n`;
   message += `Our Branches: Currency Nagar, Gurunanak Colony\n\n`;
-
-
   message += `Thank you for dining with Street Magic!`;
 
   const whatsappUrl = `https://wa.me/${customerMobile}?text=${encodeURIComponent(message)}`;
   window.open(whatsappUrl, "_blank");
 }
-
-
 
 /* ========= UPDATE MODAL TOTAL ========= */
 function updateModalTotal() {
