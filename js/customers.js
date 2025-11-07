@@ -226,7 +226,17 @@ document.addEventListener('DOMContentLoaded', function () {
   else if (type === "repeat") filtered = filtered.filter(c => c.totalOrders > 1);
   else if (type === "wrong") filtered = filtered.filter(c => !/^\d{10}$/.test(c.phone));
 
+  // 🔹 Apply Amount Sorting
+const amountSort = document.getElementById("amountSort")?.value || "none";
+if (amountSort === "low") {
+  filtered = [...filtered].sort((a, b) => (a.amount || 0) - (b.amount || 0));
+} else if (amountSort === "high") {
+  filtered = [...filtered].sort((a, b) => (b.amount || 0) - (a.amount || 0));
+} else {
+  // Default sort by total orders if no amount sorting selected
   filtered = [...filtered].sort((a, b) => (b.totalOrders || 0) - (a.totalOrders || 0));
+}
+
 
   // Apply pagination
   const start = (currentPage - 1) * pageSize;
@@ -292,6 +302,78 @@ document.addEventListener('DOMContentLoaded', function () {
   currentPage = page;
   renderCustomers();
   };
+
+
+  function renderMonthlySummary() {
+  const tbody = document.getElementById("monthlySummaryBody");
+  const orders = JSON.parse(localStorage.getItem("orders")) || [];
+
+  if (orders.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-gray-500 py-3">No orders available.</td></tr>`;
+    return;
+  }
+
+  // 🔹 Aggregate data by customer (this month)
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  const monthlyOrders = orders.filter(o => {
+    const date = new Date(o.date || o.createdAt || o.orderDate);
+    return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+  });
+
+  const summaryMap = {};
+  monthlyOrders.forEach(o => {
+    const phone = o.customerMobile?.trim();
+    const name = o.customerName?.trim() || "Unknown";
+    const total = parseFloat(o.total || 0);
+    if (!phone) return;
+
+    if (!summaryMap[phone]) summaryMap[phone] = { name, phone, totalOrders: 0, amount: 0 };
+    summaryMap[phone].totalOrders += 1;
+    summaryMap[phone].amount += total;
+  });
+
+  const summaryList = Object.values(summaryMap);
+  if (summaryList.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-gray-500 py-3">No customers found for this month.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = summaryList.map((c, i) => `
+    <tr class="hover:bg-gray-50">
+      <td class="p-2 border">${i + 1}</td>
+      <td class="p-2 border">${c.name}</td>
+      <td class="p-2 border">${c.phone}</td>
+      <td class="p-2 border">${c.totalOrders}</td>
+      <td class="p-2 border">₹${c.amount.toFixed(2)}</td>
+      <td class="p-2 border">
+        <button class="viewMonthBtn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600" data-phone="${c.phone}">
+          📆 View Month Data
+        </button>
+      </td>
+    </tr>
+  `).join("");
+
+  // 🔹 Attach view button handlers
+  document.querySelectorAll(".viewMonthBtn").forEach(btn => {
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation(); // Prevent row click events
+    const phone = btn.dataset.phone;
+
+    // Get button position for popup placement
+    const rect = btn.getBoundingClientRect();
+    const x = rect.right + 10;
+    const y = rect.top + window.scrollY + 10;
+
+    // Open popup for current month's data only
+    showCustomerPopup(phone, x, y, true);
+  });
+});
+;
+}
+
 
 
   // ========= EVENT HANDLERS =========
@@ -480,6 +562,13 @@ document.addEventListener('DOMContentLoaded', function () {
     renderBestCustomer();
   });
 
+  const amountSortEl = document.getElementById("amountSort");
+amountSortEl?.addEventListener("change", () => {
+  currentPage = 1;
+  renderCustomers();
+});
+
+
   // ========= CHART =========
   let chartInstance = null;
   let frequencyChartInstance = null;
@@ -562,6 +651,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // ========= INITIALIZE =========
   syncFromOrders();
   renderCustomers();
+  renderMonthlySummary();
 
 });
 
@@ -569,14 +659,22 @@ document.addEventListener('DOMContentLoaded', function () {
 const body = document.body;
 let popup = null;
 
-function showCustomerPopup(customerPhone, x, y) {
+function showCustomerPopup(phone, x, y, monthOnly = false) {
   const orders = JSON.parse(localStorage.getItem("orders")) || [];
-  const custOrders = orders.filter(o => o.customerMobile?.trim() === customerPhone);
+  let custOrders = orders.filter(o => o.customerMobile === phone);
 
-  if (custOrders.length === 0) {
-    hidePopup();
-    return;
-  }
+// 🔹 If monthOnly flag is true, filter to current month
+if (monthOnly) {
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  custOrders = custOrders.filter(o => {
+    const date = new Date(o.date || o.createdAt || o.orderDate);
+    return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+  });
+}
+
 
   hidePopup(); // Remove any existing popup
 
@@ -615,43 +713,152 @@ function showCustomerPopup(customerPhone, x, y) {
 
   // ===== Inner HTML =====
   popup.innerHTML = `
-    <div class="flex justify-between items-center mb-3">
-      <h3 class="text-lg font-bold text-blue-700 flex items-center gap-2">
-        🛍 Purchase History
-      </h3>
-      <button id="closePopupBtn" class="text-gray-500 hover:text-red-500 text-xl font-bold">&times;</button>
-    </div>
+  <div class="flex justify-between items-center mb-3">
+    <h3 class="text-lg font-bold text-blue-700 flex items-center gap-2">
+      🛍 Purchase History
+      ${monthOnly ? `<p class="text-sm text-blue-600 mb-2 italic">Showing only this month’s visits</p>` : ""}
+    </h3>
+    <button id="closePopupBtn" class="text-gray-500 hover:text-red-500 text-xl font-bold">&times;</button>
+  </div>
 
-    ${
-      mostRepeatItem
-        ? `<div class="mb-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
-             <p class="font-semibold text-yellow-800">⭐ Most Repeated Item:</p>
-             <p class="text-gray-800">${mostRepeatItem[0]} 
-               <span class="text-sm text-gray-600">(×${mostRepeatItem[1]})</span>
-             </p>
-           </div>`
-        : `<p class="text-gray-500 italic mb-4">No item repetition data available.</p>`
-    }
+  ${
+    mostRepeatItem
+      ? `<div class="mb-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
+           <p class="font-semibold text-yellow-800">⭐ Most Repeated Item:</p>
+           <p class="text-gray-800">${mostRepeatItem[0]} 
+             <span class="text-sm text-gray-600">(×${mostRepeatItem[1]})</span>
+           </p>
+         </div>`
+      : `<p class="text-gray-500 italic mb-4">No item repetition data available.</p>`
+  }
 
-    <ul class="space-y-3">
-      ${custOrders.map(o => `
-        <li class="border-b pb-2">
-          <p><strong>Date:</strong> ${new Date(o.date || o.createdAt || o.orderDate).toLocaleDateString()}</p>
-          <p><strong>Items:</strong> ${
-            Array.isArray(o.items)
-              ? o.items.map(i => `${i.name} (x${i.qty})`).join(", ")
-              : (o.items || "—")
-          }</p>
-          <p><strong>Total:</strong> ₹${parseFloat(o.total || 0).toFixed(2)}</p>
-        </li>
-      `).join("")}
-    </ul>
-  `;
+  <!-- 🔹 MONTHLY VISIT CHART -->
+  <div class="mb-4 bg-gray-50 p-3 rounded-lg border">
+    <p class="font-semibold text-gray-700 mb-2">📆 Monthly Visit Frequency</p>
+    <canvas id="customerVisitChart" height="150"></canvas>
+  </div>
+
+  <ul class="space-y-3">
+    ${custOrders.map(o => `
+      <li class="border-b pb-2">
+        <p><strong>Date:</strong> ${new Date(o.date || o.createdAt || o.orderDate).toLocaleDateString()}</p>
+        <p><strong>Items:</strong> ${
+          Array.isArray(o.items)
+            ? o.items.map(i => `${i.name} (x${i.qty})`).join(", ")
+            : (o.items || "—")
+        }</p>
+        <p><strong>Total:</strong> ₹${parseFloat(o.total || 0).toFixed(2)}</p>
+      </li>
+    `).join("")}
+  </ul>
+`;
+
 
   document.body.appendChild(popup);
 
   // ✅ Close button inside popup
   document.getElementById("closePopupBtn").addEventListener("click", hidePopup);
+
+  // 🔹 Prepare Visit Data (month-wise or day-wise)
+let labels = [];
+let counts = [];
+let backgroundColors = [];
+
+if (monthOnly) {
+  // --- Daily view for current month ---
+  const dailyMap = {};
+  custOrders.forEach(o => {
+    const d = new Date(o.date || o.createdAt || o.orderDate);
+    if (!isNaN(d)) {
+      const key = d.getDate(); // day of month
+      dailyMap[key] = (dailyMap[key] || 0) + 1;
+    }
+  });
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  labels = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  counts = labels.map(day => dailyMap[day] || 0);
+
+  // 🎨 Highlight weekends (Saturday & Sunday)
+  backgroundColors = labels.map(day => {
+    const d = new Date(year, month, day);
+    const isWeekend = d.getDay() === 0 || d.getDay() === 6; // Sun=0, Sat=6
+    return isWeekend ? "rgba(251,191,36,0.8)" : "rgba(59,130,246,0.6)"; // amber for weekends
+  });
+
+} else {
+  // --- Monthly view (all-time) ---
+  const monthlyMap = {};
+  custOrders.forEach(o => {
+    const d = new Date(o.date || o.createdAt || o.orderDate);
+    if (!isNaN(d)) {
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      monthlyMap[key] = (monthlyMap[key] || 0) + 1;
+    }
+  });
+
+  const sortedKeys = Object.keys(monthlyMap).sort();
+  labels = sortedKeys.map(k => {
+    const [y, m] = k.split("-");
+    const monthName = new Date(y, m - 1).toLocaleString("default", { month: "short" });
+    return `${monthName} ${y}`;
+  });
+  counts = sortedKeys.map(k => monthlyMap[k]);
+  backgroundColors = Array(counts.length).fill("rgba(59,130,246,0.6)");
+}
+
+// 🔹 Render Chart
+const ctx = document.getElementById("customerVisitChart");
+if (ctx) {
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: monthOnly ? "Visits per Day" : "Visits per Month",
+          data: counts,
+          backgroundColor: backgroundColors,
+          borderRadius: 6,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: items => {
+              if (monthOnly) {
+                const day = parseInt(items[0].label);
+                const d = new Date(new Date().getFullYear(), new Date().getMonth(), day);
+                const weekday = d.toLocaleDateString("default", { weekday: "short" });
+                return `Day ${day} (${weekday})`;
+              }
+              return items[0].label;
+            },
+            label: ctx => `${ctx.formattedValue} visits`,
+          },
+        },
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { precision: 0 } },
+        x: {
+          title: {
+            display: true,
+            text: monthOnly ? "Day of Month" : "Month",
+          },
+        },
+      },
+    },
+  });
+}
+
 }
 
 
@@ -665,6 +872,9 @@ function hidePopup() {
 
 // ✅ Attach click on table rows
 customersList.addEventListener("click", function (e) {
+  // ❌ Ignore clicks on buttons inside the table (redeem, edit, delete, WhatsApp, etc.)
+  if (e.target.closest("button")) return;
+
   const row = e.target.closest("tr[data-phone]");
   if (!row) return;
 
@@ -673,9 +883,11 @@ customersList.addEventListener("click", function (e) {
   const x = rect.right + 10;
   const y = rect.top + window.scrollY + 10;
 
+  // ✅ Only show popup when clicking elsewhere (not on buttons)
   showCustomerPopup(phone, x, y);
   e.stopPropagation();
 });
+
 
 // ✅ Hide popup on outside click
 document.addEventListener("click", function (e) {
