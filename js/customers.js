@@ -5,6 +5,9 @@ document.addEventListener('DOMContentLoaded', function () {
   let editIndex = -1;
   let undoStack = [];
   let filterMonth = "";
+  let monthlyCurrentPage = 1;
+  const monthlyPageSize = 10;
+
 
 
   // ========= DOM ELEMENTS =========
@@ -306,10 +309,12 @@ if (amountSort === "low") {
 
   function renderMonthlySummary() {
   const tbody = document.getElementById("monthlySummaryBody");
+  const paginationEl = document.getElementById("monthlyPagination"); // add this div in HTML below table
   const orders = JSON.parse(localStorage.getItem("orders")) || [];
 
   if (orders.length === 0) {
     tbody.innerHTML = `<tr><td colspan="6" class="text-center text-gray-500 py-3">No orders available.</td></tr>`;
+    if (paginationEl) paginationEl.innerHTML = "";
     return;
   }
 
@@ -336,14 +341,25 @@ if (amountSort === "low") {
   });
 
   const summaryList = Object.values(summaryMap);
+
   if (summaryList.length === 0) {
     tbody.innerHTML = `<tr><td colspan="6" class="text-center text-gray-500 py-3">No customers found for this month.</td></tr>`;
+    if (paginationEl) paginationEl.innerHTML = "";
     return;
   }
 
-  tbody.innerHTML = summaryList.map((c, i) => `
+  // 🔹 Sort by amount (highest first)
+  summaryList.sort((a, b) => b.amount - a.amount);
+
+  // 🔹 Pagination logic
+  const totalPages = Math.ceil(summaryList.length / monthlyPageSize);
+  const start = (monthlyCurrentPage - 1) * monthlyPageSize;
+  const paginatedList = summaryList.slice(start, start + monthlyPageSize);
+
+  // 🔹 Render rows
+  tbody.innerHTML = paginatedList.map((c, i) => `
     <tr class="hover:bg-gray-50">
-      <td class="p-2 border">${i + 1}</td>
+      <td class="p-2 border">${start + i + 1}</td>
       <td class="p-2 border">${c.name}</td>
       <td class="p-2 border">${c.phone}</td>
       <td class="p-2 border">${c.totalOrders}</td>
@@ -356,22 +372,44 @@ if (amountSort === "low") {
     </tr>
   `).join("");
 
-  // 🔹 Attach view button handlers
+  // 🔹 Pagination buttons
+  if (paginationEl) {
+    let html = `<div class="flex justify-center items-center mt-4 gap-2 flex-wrap">`;
+
+    html += `<button class="px-3 py-1 border rounded ${monthlyCurrentPage === 1 ? 'bg-gray-200 cursor-not-allowed' : 'bg-white hover:bg-gray-100'}" ${monthlyCurrentPage === 1 ? 'disabled' : ''} data-page="${monthlyCurrentPage - 1}">‹ Prev</button>`;
+
+    for (let i = 1; i <= totalPages; i++) {
+      html += `<button class="px-3 py-1 border rounded ${i === monthlyCurrentPage ? 'bg-blue-600 text-white' : 'bg-white hover:bg-gray-100'}" data-page="${i}">${i}</button>`;
+    }
+
+    html += `<button class="px-3 py-1 border rounded ${monthlyCurrentPage === totalPages ? 'bg-gray-200 cursor-not-allowed' : 'bg-white hover:bg-gray-100'}" ${monthlyCurrentPage === totalPages ? 'disabled' : ''} data-page="${monthlyCurrentPage + 1}">Next ›</button>`;
+
+    html += `</div>`;
+    paginationEl.innerHTML = html;
+
+    // Attach pagination button handlers
+    paginationEl.querySelectorAll("button[data-page]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const page = parseInt(btn.getAttribute("data-page"));
+        if (!isNaN(page) && page >= 1 && page <= totalPages) {
+          monthlyCurrentPage = page;
+          renderMonthlySummary();
+        }
+      });
+    });
+  }
+
+  // 🔹 Attach popup buttons
   document.querySelectorAll(".viewMonthBtn").forEach(btn => {
-  btn.addEventListener("click", (e) => {
-    e.stopPropagation(); // Prevent row click events
-    const phone = btn.dataset.phone;
-
-    // Get button position for popup placement
-    const rect = btn.getBoundingClientRect();
-    const x = rect.right + 10;
-    const y = rect.top + window.scrollY + 10;
-
-    // Open popup for current month's data only
-    showCustomerPopup(phone, x, y, true);
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const phone = btn.dataset.phone;
+      const rect = btn.getBoundingClientRect();
+      const x = rect.right + 10;
+      const y = rect.top + window.scrollY + 10;
+      showCustomerPopup(phone, x, y, true);
+    });
   });
-});
-;
 }
 
 
