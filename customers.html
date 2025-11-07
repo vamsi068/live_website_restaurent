@@ -80,6 +80,16 @@
         <option value="wrong">Wrong Numbers</option>
       </select>
 
+      <!-- 🔹 Amount Sort -->
+      <select 
+        id="amountSort" 
+        class="w-full sm:w-1/4 border rounded-lg p-2 focus:ring-2 focus:ring-blue-400 outline-none"
+      >
+        <option value="none">Sort by Amount</option>
+        <option value="low">Low → High</option>
+        <option value="high">High → Low</option>
+      </select>
+
       <!-- 🔹 Clear Filters Button -->
       <button 
         id="clearFiltersBtn" 
@@ -135,6 +145,27 @@
         </tbody>
       </table>
     </div>
+
+    <!-- ===== MONTHLY CUSTOMER SUMMARY TABLE ===== -->
+    <section class="overflow-x-auto bg-white rounded-xl shadow p-4 mb-8">
+      <h3 class="text-xl font-semibold mb-4">📅 Monthly Customer Summary</h3>
+      <table class="w-full text-left table-auto border-collapse" id="monthlySummaryTable">
+        <thead>
+          <tr class="bg-gray-200">
+            <th class="p-2 border">#</th>
+            <th class="p-2 border">Name</th>
+            <th class="p-2 border">Mobile Number</th>
+            <th class="p-2 border">Total Orders</th>
+            <th class="p-2 border">Amount Spent</th>
+            <th class="p-2 border">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="monthlySummaryBody">
+          <tr><td colspan="6" class="text-center text-gray-500 py-3">Loading monthly data...</td></tr>
+        </tbody>
+      </table>
+    </section>
+
 
     <!-- ✅ PAGINATION CONTAINER -->
     <div id="paginationContainer" class="flex justify-center mb-8"></div>
