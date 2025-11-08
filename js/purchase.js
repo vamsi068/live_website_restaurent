@@ -400,14 +400,18 @@ newItemBtn.addEventListener("click", (e) => {
   const imageInput = newItemPopup.querySelector("#newItemImage");
   const preview = newItemPopup.querySelector("#previewImage");
 
-  // 🔸 Live preview when selecting or capturing an image
+  // 🔸 Auto-compress + live preview on image upload
   imageInput.addEventListener("change", (ev) => {
-    const file = ev.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => preview.src = reader.result;
-    reader.readAsDataURL(file);
+  const file = ev.target.files[0];
+  if (!file) return;
+
+  compressImage(file, 20).then((compressedBase64) => {
+    preview.src = compressedBase64;
+    // Store compressed image temporarily for when “Add” is clicked
+    imageInput.compressedBase64 = compressedBase64;
   });
+  });
+
 
   // 🔹 Confirm Add
   newItemPopup.querySelector("#addItemConfirm").addEventListener("click", () => {
@@ -418,31 +422,21 @@ newItemBtn.addEventListener("click", (e) => {
     if (!name || !unit || !category) return alert("Please fill all fields (Name, Unit, Category).");
     if (inventory[name]) return alert("Item already exists!");
 
-    const imgFile = imageInput.files[0];
+    const compressedBase64 = imageInput.compressedBase64;
 
-    if (imgFile) {
-    compressImage(imgFile, 20).then((compressed) => {
-    // ✅ Save compressed image under new name
-    images[newName] = compressed;
-
-    // ✅ Delete old image if name changed
-    if (images[productName] && newName !== productName) {
-      delete images[productName];
-    }
-
-    saveData();
-    closeModal();
-    renderAll();
-    });
-  }
- 
-    
-    else {
+    if (compressedBase64) {
+      images[name] = compressedBase64;
+      inventory[name] = { qty: 0, unit, category };
+      saveData();
+      renderAll();
+      closePopup();
+    } else {
       inventory[name] = { qty: 0, unit, category };
       saveData();
       renderAll();
       closePopup();
     }
+
   });
 
   // ✅ Close Popup on outside click
@@ -464,7 +458,7 @@ newItemBtn.addEventListener("click", (e) => {
 });
 
 
-// ===== Compress Image to ~20KB =====
+// ===== Compress Image to ~20KB (Preserve Transparency for PNGs) =====
 function compressImage(file, maxKB = 20) {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -474,22 +468,47 @@ function compressImage(file, maxKB = 20) {
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
 
-        // Scale down a bit if needed
+        // Determine if original is PNG (transparency supported)
+        const isPNG = file.type === "image/png" || e.target.result.startsWith("data:image/png");
+
+        // Compute resize scale
         const scale = Math.sqrt((maxKB * 1024) / file.size);
         const width = img.width * (scale < 1 ? scale : 1);
         const height = img.height * (scale < 1 ? scale : 1);
+
+        // Set canvas size
         canvas.width = width;
         canvas.height = height;
+
+        // Draw image preserving transparency for PNGs
+        if (isPNG) {
+          ctx.clearRect(0, 0, width, height);
+        } else {
+          ctx.fillStyle = "#fff"; // white background for JPEGs
+          ctx.fillRect(0, 0, width, height);
+        }
         ctx.drawImage(img, 0, 0, width, height);
 
-        // Compress as JPEG with quality tuned
-        let quality = 0.7;
-        let result = canvas.toDataURL("image/jpeg", quality);
+        // Compression logic
+        let quality = 0.8;
+        let result = canvas.toDataURL(isPNG ? "image/png" : "image/jpeg", quality);
 
-        // Further reduce until under target
+        // Keep reducing quality/scale until <= target
         while (result.length / 1024 > maxKB && quality > 0.3) {
           quality -= 0.1;
-          result = canvas.toDataURL("image/jpeg", quality);
+          result = canvas.toDataURL(isPNG ? "image/png" : "image/jpeg", quality);
+        }
+
+        // Final check — if still too large, reduce dimensions further
+        if (result.length / 1024 > maxKB) {
+          const smallerCanvas = document.createElement("canvas");
+          const smallerCtx = smallerCanvas.getContext("2d");
+          const ratio = 0.9;
+          smallerCanvas.width = width * ratio;
+          smallerCanvas.height = height * ratio;
+          if (isPNG) smallerCtx.clearRect(0, 0, smallerCanvas.width, smallerCanvas.height);
+          smallerCtx.drawImage(canvas, 0, 0, smallerCanvas.width, smallerCanvas.height);
+          result = smallerCanvas.toDataURL(isPNG ? "image/png" : "image/jpeg", quality);
         }
 
         resolve(result);
@@ -618,15 +637,18 @@ function openEditModal(productName) {
   document.body.appendChild(modal);
   setTimeout(() => modal.classList.add("show"), 10);
 
-  // Live image preview
+  // 🔸 Auto-compress + live preview in edit modal
   modal.querySelector(".edit-img").addEventListener("change", e => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => modal.querySelector("#previewImage").src = reader.result;
-      reader.readAsDataURL(file);
-    }
+  const file = e.target.files[0];
+  if (!file) return;
+
+  compressImage(file, 20).then((compressedBase64) => {
+    modal.querySelector("#previewImage").src = compressedBase64;
+    // Keep compressed result attached to input element
+    e.target.compressedBase64 = compressedBase64;
   });
+  });
+
 
   // Save changes
   modal.querySelector(".save-edit").addEventListener("click", () => {
