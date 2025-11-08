@@ -421,16 +421,23 @@ newItemBtn.addEventListener("click", (e) => {
     const imgFile = imageInput.files[0];
 
     if (imgFile) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        images[name] = reader.result;
-        inventory[name] = { qty: 0, unit, category };
-        saveData();
-        renderAll();
-        closePopup();
-      };
-      reader.readAsDataURL(imgFile);
-    } else {
+    compressImage(imgFile, 20).then((compressed) => {
+    // ✅ Save compressed image under new name
+    images[newName] = compressed;
+
+    // ✅ Delete old image if name changed
+    if (images[productName] && newName !== productName) {
+      delete images[productName];
+    }
+
+    saveData();
+    closeModal();
+    renderAll();
+    });
+  }
+ 
+    
+    else {
       inventory[name] = { qty: 0, unit, category };
       saveData();
       renderAll();
@@ -455,6 +462,44 @@ newItemBtn.addEventListener("click", (e) => {
 
   setTimeout(() => document.addEventListener("click", handleOutsideClick), 50);
 });
+
+
+// ===== Compress Image to ~20KB =====
+function compressImage(file, maxKB = 20) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        // Scale down a bit if needed
+        const scale = Math.sqrt((maxKB * 1024) / file.size);
+        const width = img.width * (scale < 1 ? scale : 1);
+        const height = img.height * (scale < 1 ? scale : 1);
+        canvas.width = width;
+        canvas.height = height;
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Compress as JPEG with quality tuned
+        let quality = 0.7;
+        let result = canvas.toDataURL("image/jpeg", quality);
+
+        // Further reduce until under target
+        while (result.length / 1024 > maxKB && quality > 0.3) {
+          quality -= 0.1;
+          result = canvas.toDataURL("image/jpeg", quality);
+        }
+
+        resolve(result);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 
 // ===== Delete Purchase =====
 function deletePurchase(index) {
@@ -605,16 +650,23 @@ function openEditModal(productName) {
 
     // ✅ Update image if new one selected
     if (imgFile) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        images[newName] = reader.result;
-        if (images[productName]) delete images[productName];
-        saveData();
-        closeModal();
-        renderAll();
-      };
-      reader.readAsDataURL(imgFile);
-    } else {
+    compressImage(imgFile, 20).then((compressed) => {
+    // ✅ Save compressed image under new name
+    images[newName] = compressed;
+
+    // ✅ Delete old image if name changed
+    if (images[productName] && newName !== productName) {
+      delete images[productName];
+    }
+
+    saveData();
+    closeModal();
+    renderAll();
+    });
+  }
+
+
+    else {
       // Keep existing image
       if (images[productName] && newName !== productName) {
         images[newName] = images[productName];
@@ -623,15 +675,15 @@ function openEditModal(productName) {
       saveData();
       closeModal();
       renderAll();
-    }
-  });
+      }
+    });
 
-  const closeModal = () => {
+    const closeModal = () => {
     modal.classList.remove("show");
     setTimeout(() => modal.remove(), 250);
-  };
-  modal.querySelector(".cancel-edit").addEventListener("click", closeModal);
-  modal.addEventListener("click", e => {
+    };
+    modal.querySelector(".cancel-edit").addEventListener("click", closeModal);
+    modal.addEventListener("click", e => {
     if (e.target.classList.contains("edit-modal-overlay")) closeModal();
   });
 }
