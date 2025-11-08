@@ -1027,27 +1027,58 @@ window.addEventListener("click", (e) => {
 
 
 
-// file upload preview
+// file upload preview + auto compression ≤20KB
 document.getElementById("newItemImageUpload")?.addEventListener("change", function (e) {
   const file = e.target.files?.[0];
   if (!file) return;
 
-  // 🔸 Check file size (20 KB = 20480 bytes)
-  if (file.size > 20480) {
-    alert("Please upload an image smaller than 20 KB.");
-    e.target.value = ""; // clear file input
-    return;
-  }
-
   const reader = new FileReader();
   reader.onload = function (ev) {
-    uploadedImageBase64 = ev.target.result;
-    localStorage.setItem("lastUploadedImage", uploadedImageBase64);
-    const img = document.getElementById("imagePreview");
-    if (img) img.src = uploadedImageBase64;
+    const img = new Image();
+    img.onload = function () {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      // Scale down dimensions proportionally
+      let width = img.width;
+      let height = img.height;
+      const maxSize = 500; // cap dimension for fast compression
+      if (width > height && width > maxSize) {
+        height *= maxSize / width;
+        width = maxSize;
+      } else if (height > width && height > maxSize) {
+        width *= maxSize / height;
+        height = maxSize;
+      }
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Iteratively lower quality until ≤ 20 KB
+      let quality = 0.9;
+      let base64 = canvas.toDataURL("image/jpeg", quality);
+      while (base64.length > 20480 * 1.37 && quality > 0.1) { 
+        // Base64 is ~1.37× larger than binary
+        quality -= 0.05;
+        base64 = canvas.toDataURL("image/jpeg", quality);
+      }
+
+      if (base64.length > 20480 * 1.37) {
+        alert("Could not compress image under 20KB. Try a smaller image.");
+        e.target.value = "";
+        return;
+      }
+
+      uploadedImageBase64 = base64;
+      localStorage.setItem("lastUploadedImage", uploadedImageBase64);
+      const preview = document.getElementById("imagePreview");
+      if (preview) preview.src = uploadedImageBase64;
+    };
+    img.src = ev.target.result;
   };
   reader.readAsDataURL(file);
 });
+
 
 
 // Dropdown & UI wiring on DOM ready
