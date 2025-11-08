@@ -780,6 +780,7 @@ function displayBestSaleItem() {
 }
 
 /* ========= WHATSAPP BILL (with Reward Points, Total Orders & offer line) ========= */
+/* ========= WHATSAPP BILL (fixed Total Orders calculation) ========= */
 function sendWhatsAppBill(order) {
   if (!order) return alert("Order not found!");
 
@@ -789,31 +790,44 @@ function sendWhatsAppBill(order) {
     return;
   }
 
-  customerMobile = customerMobile.replace(/\D/g, "");
-  if (!customerMobile.startsWith("91")) customerMobile = "91" + customerMobile;
+  // Normalize: remove all non-digits
+  const normalize = s => String(s || "").replace(/\D/g, "");
+  const last10 = s => {
+    const n = normalize(s);
+    return n.length > 10 ? n.slice(-10) : n;
+  };
 
-  const customers = JSON.parse(localStorage.getItem("customers")) || [];
-  const normalize = phone => (phone || "").replace(/\D/g, "");
-
-  const customerData = customers.find(c =>
-    normalize(c.phone) === normalize(order.customerNumber) ||
-    normalize(c.phone) === normalize(order.customerMobile)
-  );
-
-  let totalOrders = 0;
-  let rewardPoints = 0;
-  let redeemed = 0;
-
-  // ✅ FIXED: don't auto-increment totalOrders
-  if (customerData) {
-    totalOrders = customerData.totalOrders || 1;
-    redeemed = customerData.redeemed || 0;
-  } else {
-    totalOrders = 1;
+  const normalizedOrderPhone = last10(customerMobile);
+  if (!normalizedOrderPhone) {
+    alert("Invalid customer mobile number!");
+    return;
   }
 
-  const totalEarned = Math.floor(totalOrders / 10);
-  rewardPoints = Math.max(0, totalEarned - redeemed);
+  // Find customer record (support both 'number' and 'phone' fields)
+  const customersList = JSON.parse(localStorage.getItem("customers")) || [];
+  const customerData = customersList.find(c => {
+    return last10(c.number) === normalizedOrderPhone || last10(c.phone) === normalizedOrderPhone;
+  });
+
+  // Compute total orders from the orders array (matching last 10 digits)
+  const ordersLocal = JSON.parse(localStorage.getItem("orders")) || [];
+  const totalOrdersCount = ordersLocal.filter(o => {
+    const oPhone = last10(o.customerNumber || o.customerMobile || "");
+    return oPhone && oPhone === normalizedOrderPhone;
+  }).length || (customerData ? (customerData.totalOrders || 0) : 0);
+
+  // redeemed points if any in customer record
+  const redeemed = (customerData && Number(customerData.redeemed)) || 0;
+
+  // reward points calculation: 1 point for each 10 completed orders (floor)
+  const totalEarned = Math.floor(totalOrdersCount / 10);
+  const rewardPoints = Math.max(0, totalEarned - redeemed);
+
+  // Prepare phone for wa.me: use country code if present, else assume India (91)
+  let waPhone = normalize(customerMobile);
+  if (!waPhone.startsWith("91")) waPhone = "91" + waPhone;
+  // ensure we send full number to wa.me
+  // (wa.me accepts numbers with country code only)
 
   let message = `*Street Magic Bill*\nTangellamudivari Street, Gurunanak Colony, Vijayawada - 520007\n\n`;
 
@@ -825,17 +839,18 @@ function sendWhatsAppBill(order) {
     message += `• ${it.name}${variant} x${it.qty} - ₹${(it.price * it.qty).toFixed(2)}\n`;
   });
 
-  message += `\n*Total: ₹${order.total.toFixed(2)}*\n`;
-  message += `*Total Orders:* ${totalOrders}\n`;
+  message += `\n*Total: ₹${(Number(order.total) || 0).toFixed(2)}*\n`;
+  message += `*Total Orders:* ${totalOrdersCount}\n`;
   message += `*Reward Points:* ${rewardPoints}\n\n`;
 
   message += `_Complete 10 orders and you’ll get 1 reward point = 1 free meal_\n\n`;
   message += `Our Branches: Currency Nagar, Gurunanak Colony\n\n`;
   message += `Thank you for dining with Street Magic!`;
 
-  const whatsappUrl = `https://wa.me/${customerMobile}?text=${encodeURIComponent(message)}`;
+  const whatsappUrl = `https://wa.me/${waPhone}?text=${encodeURIComponent(message)}`;
   window.open(whatsappUrl, "_blank");
 }
+
 
 /* ========= UPDATE MODAL TOTAL ========= */
 function updateModalTotal() {
