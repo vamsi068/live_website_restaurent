@@ -30,7 +30,9 @@ function saveCart() {
 
 function saveCustomers() {
   localStorage.setItem("customers", JSON.stringify(customers));
+  customers = JSON.parse(localStorage.getItem("customers")) || [];
 }
+
 
 function escapeHtml(str) {
   if (typeof str !== "string") return str;
@@ -654,6 +656,14 @@ function saveOrder(type) {
     renderCart();
     renderPreviousOrders();
 
+    /* ✅ ADD THIS FIX */
+    const nameField = document.getElementById("orderCustomerName");
+    const mobileField = document.getElementById("orderCustomerMobile");
+    if (nameField) nameField.value = "";
+    if (mobileField) mobileField.value = "";
+    updateCustomerRewardDisplay(""); // clears reward display
+    /* ✅ END FIX */
+
     return newOrder;
   } finally {
     savingOrder = false;
@@ -925,7 +935,10 @@ window.addEventListener("click", (e) => {
   if (modal && e.target === modal) modal.style.display = "none";
 });
 
-// listen for inputs to persist lastCategory/lastSubcategory and update reward display
+
+// =======================
+// INPUT HANDLERS + CUSTOMER AUTOCOMPLETE (mobile + name)
+// =======================
 document.addEventListener("input", (e) => {
   if (e.target.id === "newItemCategory") {
     lastCategory = e.target.value.trim();
@@ -935,15 +948,97 @@ document.addEventListener("input", (e) => {
     lastSubcategory = e.target.value.trim();
     localStorage.setItem("lastSubcategory", lastSubcategory);
   }
-  if (e.target.id === "orderCustomerMobile") {
-    updateCustomerRewardDisplay(e.target.value.trim());
+
+  // Customer Mobile / Name autocomplete (show saved numbers too)
+  if (e.target.id === "orderCustomerMobile" || e.target.id === "orderCustomerName") {
+  const inputField = e.target;
+  const value = inputField.value.trim().toLowerCase();
+  document.querySelector("#customerSuggestions")?.remove();
+
+  const customersList = customers || [];
+  if (customersList.length === 0) return;
+
+  let matches = [];
+
+  if (value.length === 0) {
+    // 👇 show first 10 customers by default
+    matches = customersList.slice(0, 10);
+  } else if (inputField.id === "orderCustomerMobile") {
+    const search = value.replace(/\D/g, ""); // digits only
+    matches = customersList
+      .filter(c => String(c.mobile || "").includes(search))
+      .slice(0, 6);
+  } else if (inputField.id === "orderCustomerName") {
+    matches = customersList
+      .filter(c => (c.name || "").toLowerCase().includes(value))
+      .slice(0, 6);
+  }
+
+  if (matches.length === 0) return;
+
+  const dropdown = document.createElement("div");
+  dropdown.id = "customerSuggestions";
+  dropdown.style.position = "absolute";
+  dropdown.style.background = "#fff";
+  dropdown.style.border = "1px solid #ccc";
+  dropdown.style.borderRadius = "8px";
+  dropdown.style.boxShadow = "0 2px 6px rgba(0,0,0,0.15)";
+  dropdown.style.zIndex = "9999";
+  dropdown.style.width = `${inputField.offsetWidth}px`;
+  dropdown.style.maxHeight = "180px";
+  dropdown.style.overflowY = "auto";
+
+  const rect = inputField.getBoundingClientRect();
+  dropdown.style.left = `${rect.left + window.scrollX}px`;
+  dropdown.style.top = `${rect.bottom + window.scrollY}px`;
+
+  matches.forEach(c => {
+    const opt = document.createElement("div");
+    opt.textContent = `${c.name || "Guest"} — ${c.mobile || ""}`;
+    opt.style.padding = "6px 10px";
+    opt.style.cursor = "pointer";
+    opt.addEventListener("mouseenter", () => opt.style.background = "#f0f0f0");
+    opt.addEventListener("mouseleave", () => opt.style.background = "#fff");
+    opt.addEventListener("click", () => {
+      document.getElementById("orderCustomerName").value = c.name || "";
+      document.getElementById("orderCustomerMobile").value = c.mobile || "";
+      updateCustomerRewardDisplay(c.mobile);
+      dropdown.remove();
+    });
+    dropdown.appendChild(opt);
+  });
+
+  inputField.parentElement.appendChild(dropdown);
+  dropdown.style.position = "absolute";
+  dropdown.style.left = "0";
+  dropdown.style.top = `${inputField.offsetHeight}px`;
+
   }
 });
+
+// Hide dropdown on outside click
+window.addEventListener("click", (e) => {
+  if (!e.target.closest("#customerSuggestions") &&
+      e.target.id !== "orderCustomerMobile" &&
+      e.target.id !== "orderCustomerName") {
+    document.querySelector("#customerSuggestions")?.remove();
+  }
+});
+
+
 
 // file upload preview
 document.getElementById("newItemImageUpload")?.addEventListener("change", function (e) {
   const file = e.target.files?.[0];
   if (!file) return;
+
+  // 🔸 Check file size (20 KB = 20480 bytes)
+  if (file.size > 20480) {
+    alert("Please upload an image smaller than 20 KB.");
+    e.target.value = ""; // clear file input
+    return;
+  }
+
   const reader = new FileReader();
   reader.onload = function (ev) {
     uploadedImageBase64 = ev.target.result;
@@ -953,6 +1048,7 @@ document.getElementById("newItemImageUpload")?.addEventListener("change", functi
   };
   reader.readAsDataURL(file);
 });
+
 
 // Dropdown & UI wiring on DOM ready
 window.addEventListener("DOMContentLoaded", () => {
