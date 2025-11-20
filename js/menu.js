@@ -715,16 +715,17 @@ function printKOT() {
   const printWin = window.open("", "KOT", "width=400,height=600");
   printWin.document.write(`
     <html>
-      <head>
-        <style>
-          @page { size: 80mm auto; margin: 2mm; }
-          body { font-family: 'Courier New', monospace; font-size:13px; white-space:pre; line-height:1.3; }
-          pre { margin:0; text-align:left; }
-        </style>
-      </head>
-      <body>
-        <pre>${kotText}</pre>
-      </body>
+    <head>
+      <style>
+        @page { size: 80mm auto; margin: 2mm; }
+        body { font-family: 'Courier New', monospace; font-size: 18px; white-space: pre; line-height: 1.55; font-weight: 600; transform: scale(1); transform-origin: top left; }
+        pre { margin: 0; text-align: left; }
+        @media print { body { zoom: 1; } }
+      </style>
+    </head>
+    <body>
+      <pre>${kotText}</pre>
+    </body>
     </html>
   `);
   printWin.document.close();
@@ -1215,4 +1216,5 @@ function renderCustomers() {
     </tr>
   `).join("");
 }
+
 
